@@ -3,11 +3,16 @@ import http from "http";
 import { configs } from "./configs";
 import { bot } from "./bot";
 import { middleware } from "./middleware/middleware";
+import { routes } from "./routes";
 
 const main = async () => {
   const app = express();
 
+  app.set("trust proxy", "loopback");
+
   middleware(app);
+
+  routes(app);
 
   const server = http.createServer(app);
 

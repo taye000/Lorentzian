@@ -2,6 +2,7 @@ import { Context, Telegraf } from "telegraf";
 import { message } from "telegraf/filters";
 import { configs } from "./configs";
 import { formatMessage } from "./utils";
+import { MessageData } from "./@types/message";
 
 const bot = new Telegraf(configs.bot_token!);
 
@@ -34,15 +35,21 @@ bot.help(async (ctx) => {
 
 bot.on(message("text"), async (ctx) => await ctx.reply("👍"));
 
-const sendMessage = async (text: string) => {
+const sendMessage = async (data: any) => {
+  console.log("Sending message...", data);
+  
   try {
-    if (typeof text !== "string" || !text.trim()) {
+    if (!data || typeof data !== "object") {
       throw new Error("Invalid message");
     }
-    const formattedText = await formatMessage(text);
-    await bot.telegram.sendMessage(configs.chat_id!, formattedText, {
+    const { symbol, price, action } = data;
+    const message = `*${symbol}* is at *${price}* and is a *${action}* signal`;
+
+    await bot.telegram.sendMessage(configs.chat_id!, message, {
       parse_mode: "MarkdownV2",
     });
+    console.log("Message sent successfully", message);
+    
   } catch (error: any) {
     console.error("Error sending message", error);
   }
