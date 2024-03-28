@@ -1,7 +1,28 @@
 import "dotenv/config";
+import logger from "../utils/logger";
+
+const botToken = process.env.BOT_TOKEN;
+const chatId = process.env.CHAT_ID;
+const port = process.env.PORT;
+
+if (!botToken) {
+  logger.error("Error: BOT_TOKEN environment variable is missing.");
+  process.exit(1);
+}
+
+if (!chatId) {
+  logger.error("Error: CHAT_ID environment variable is missing.");
+  process.exit(1);
+}
+
+const parsedPort = parseInt(port || "", 10);
+if (isNaN(parsedPort) || parsedPort <= 0) {
+  logger.error("Error: Invalid PORT environment variable.");
+  process.exit(1);
+}
 
 export const configs = {
-  bot_token: process.env.BOT_TOKEN,
-  chat_id: process.env.CHAT_ID,
-  port: process.env.PORT,
+  bot_token: botToken,
+  chat_id: chatId,
+  port: parsedPort,
 };

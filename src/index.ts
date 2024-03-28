@@ -4,6 +4,7 @@ import { configs } from "./configs";
 import { bot } from "./bot";
 import { middleware } from "./middleware/middleware";
 import { routes } from "./routes";
+import logger from "./utils/logger";
 
 const main = async () => {
   const app = express();
@@ -14,31 +15,31 @@ const main = async () => {
 
   routes(app);
 
-  const server = http.createServer(app);
-
   const port = configs.port || 5001;
 
+  const server = http.createServer(app);
+
   server.listen(port, () => {
-    console.log(
+    logger.info(
       `🔥🔥🔥 Server running... ${port},` + ` http://localhost:${port}`
     );
   });
 
   server.on("error", (error: any) => {
-    console.error("Error starting server", error);
+    logger.error("Error starting server", error);
     process.exit(1);
   });
 
   try {
-    console.log("Starting the Bot...");
+    logger.info("Starting the Bot...");
     await bot.launch();
   } catch (error: any) {
-    console.error("Error starting bot", error);
+    logger.error("Error starting bot", error);
     process.exit(1);
   }
 };
 
 main().catch((error) => {
-  console.error("Error starting application", error);
+  logger.error("Error starting application", error);
   process.exit(1);
 });

@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import { sendMessage } from "../bot";
+import logger from "../utils/logger";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
-    console.log("TradingView Webhook testing...");
-    console.log("req.body", req.body);
+    logger.info("TradingView Webhook testing...");
+    logger.info("req.body", req.body);
     const kernelData = req.body;
-    console.log({ kernelData });
+    logger.info({ kernelData });
 
     sendMessage(kernelData);
 
@@ -16,6 +17,13 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       data: kernelData,
     });
   } catch (error: any) {
-    console.error("Error processing TradingView Webhook", error);
+    logger.error("Error processing TradingView Webhook", error);
+
+    // Sending an error response back to TradingView
+    res.status(500).json({
+      message: "Error processing TradingView Webhook",
+      success: false,
+      error: error.message,
+    });
   }
 };

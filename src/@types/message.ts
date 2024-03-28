@@ -1,5 +1,6 @@
 export interface MessageData {
-  symbol: string;
-  action: string;
-  price: number;
+  ticker: any;
+  condition: any;
+  close: any;
+  interval: any;
 }
