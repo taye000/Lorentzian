@@ -4,6 +4,8 @@ import logger from "../utils/logger";
 const botToken = process.env.BOT_TOKEN;
 const chatId = process.env.CHAT_ID;
 const port = process.env.PORT;
+const apiKey = process.env.API_KEY;
+const apiSecret = process.env.API_SECRET;
 
 if (!botToken) {
   logger.error("Error: BOT_TOKEN environment variable is missing.");
@@ -12,6 +14,16 @@ if (!botToken) {
 
 if (!chatId) {
   logger.error("Error: CHAT_ID environment variable is missing.");
+  process.exit(1);
+}
+
+if (!apiKey) {
+  logger.error("Error: API_KEY environment variable is missing.");
+  process.exit(1);
+}
+
+if (!apiSecret) {
+  logger.error("Error: API_SECRET environment variable is missing.");
   process.exit(1);
 }
 
@@ -25,4 +37,8 @@ export const configs = {
   bot_token: botToken,
   chat_id: chatId,
   port: parsedPort,
+  bybit: {
+    apiKey,
+    apiSecret,
+  },
 };
