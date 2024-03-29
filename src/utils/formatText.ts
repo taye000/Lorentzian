@@ -41,3 +41,8 @@ export const formatWalletBalance = (walletBalance: any) => {
 
   return summaryMessage;
 };
+
+export const formatPositionInfo = (positionInfo: any) => {
+  // Example: Assuming positionInfo is an object with properties like size, entryPrice, etc.
+  return `Position Info:\nSize: ${positionInfo.size}\nEntry Price: ${positionInfo.entryPrice}\n...`;
+};

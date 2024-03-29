@@ -1,14 +1,12 @@
 import { Request, Response } from "express";
 import { sendMessage } from "../bot";
 import logger from "../utils/logger";
+import { formatMessage } from "../utils";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
     logger.info("TradingView Webhook testing...");
     console.log("req.body", req.body);
-    logger.info("req.headers", req.headers);
-    logger.info("req.method", req.method);
-    logger.info("req.body", req.body);
 
     // Get the Content-Type header
     const contentType = req.get("Content-Type");
@@ -17,14 +15,18 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     let kernelData;
     if (contentType && contentType.startsWith("application/json")) {
       // If the content type is JSON, parse the body as JSON
-      kernelData = req.body;
+      const { action, ticker, close, interval } = req.body;
+
+      // Format the message using formatMessage function
+      kernelData = await formatMessage(`${action} ${ticker} ${close} ${interval}`);
     } else {
       // Otherwise, use the body as is
-      kernelData = req.body;
+      kernelData = req.body.toString();
     }
 
     logger.info({ kernelData });
 
+    // Send the message to Telegram
     sendMessage(kernelData);
 
     res.status(200).json({
