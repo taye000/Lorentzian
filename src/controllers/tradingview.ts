@@ -5,8 +5,24 @@ import logger from "../utils/logger";
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
     logger.info("TradingView Webhook testing...");
+    console.log("req.body", req.body);
+    logger.info("req.headers", req.headers);
+    logger.info("req.method", req.method);
     logger.info("req.body", req.body);
-    const kernelData = req.body;
+
+    // Get the Content-Type header
+    const contentType = req.get("Content-Type");
+
+    // Parse the body based on the Content-Type header
+    let kernelData;
+    if (contentType && contentType.startsWith("application/json")) {
+      // If the content type is JSON, parse the body as JSON
+      kernelData = req.body;
+    } else {
+      // Otherwise, use the body as is
+      kernelData = req.body;
+    }
+
     logger.info({ kernelData });
 
     sendMessage(kernelData);

@@ -1,6 +1,7 @@
 import {
   GetWalletBalanceParamsV5,
   RestClientV5,
+  OrderParamsV5,
 } from "bybit-api";
 import logger from "./utils/logger";
 
@@ -27,6 +28,17 @@ export class BybitWrapper {
       }
     } catch (error: any) {
       logger.error("Error getting wallet balance", error);
+      throw error;
+    }
+  }
+
+  async submitOrder(params: OrderParamsV5){
+    try {
+      const order = await this.client.submitOrder(params);
+      logger.info(order);
+      return order;
+    } catch (error: any) {
+      logger.error("Error creating order", error);
       throw error;
     }
   }
