@@ -6,6 +6,7 @@ const chatId = process.env.CHAT_ID;
 const port = process.env.PORT;
 const apiKey = process.env.API_KEY;
 const apiSecret = process.env.API_SECRET;
+const buyPercentage = process.env.BUY_PERCENTAGE;
 
 if (!botToken) {
   logger.error("Error: BOT_TOKEN environment variable is missing.");
@@ -37,6 +38,7 @@ export const configs = {
   bot_token: botToken,
   chat_id: chatId,
   port: parsedPort,
+  buyPercentage: parseFloat(buyPercentage || "0.1"),
   bybit: {
     apiKey,
     apiSecret,

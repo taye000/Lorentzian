@@ -9,7 +9,11 @@ import {
   OrderTypeV5,
 } from "bybit-api";
 
-export async function submitOrder(req: Request, res: Response) {
+export async function submitOrder(
+  req: Request,
+  res: Response,
+  orderParams: OrderParamsV5
+) {
   try {
     const { category, symbol, side, orderType, qty } = req.query;
 
@@ -30,6 +34,7 @@ export async function submitOrder(req: Request, res: Response) {
       });
     }
 
+    // add price if limit order
     const params: OrderParamsV5 = {
       category: category as CategoryV5,
       symbol: symbol as string,
