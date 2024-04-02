@@ -9,15 +9,18 @@ import {
   OrderTypeV5,
 } from "bybit-api";
 
+// submitOrder controller function for the API
 export async function submitOrder(
   req: Request,
   res: Response,
   orderParams: OrderParamsV5
 ) {
   try {
-    const { category, symbol, side, orderType, qty } = req.query;
+    const { symbol, side, orderType, qty } = req.query;
 
-    if (!category || !symbol || !side || !orderType || !qty) {
+    const category = "inverse";
+
+    if (!symbol || !side || !orderType || !qty) {
       return res.status(400).json({
         message: "Missing required parameters",
         success: false,
@@ -62,11 +65,50 @@ export async function submitOrder(
   }
 }
 
+// place order function for the bot
+export async function placeOrder(
+  category: CategoryV5,
+  symbol: string,
+  side: OrderSideV5,
+  orderType: OrderTypeV5,
+  qty: string
+) {
+  try {
+    // add price if limit order
+    const params: OrderParamsV5 = {
+      category: category,
+      symbol: symbol,
+      side: side,
+      orderType: orderType,
+      qty: qty,
+    };
+
+    const order = await bybit.submitOrder(params);
+    logger.info("Order submitted successfully", order);
+
+    return {
+      message: "Order submitted successfully",
+      success: true,
+      data: order,
+    };
+  } catch (error: any) {
+    logger.error("Error submitting order", error);
+
+    return {
+      message: "Error submitting order",
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
 export async function cancelOrder(req: Request, res: Response) {
   try {
-    const { category, symbol, orderId } = req.query;
+    const { symbol, orderId } = req.query;
 
-    if (!category || !symbol || !orderId) {
+    const category = "inverse";
+
+    if (!symbol || !orderId) {
       return res.status(400).json({
         message: "Missing required parameters",
         success: false,
@@ -110,9 +152,11 @@ export async function cancelOrder(req: Request, res: Response) {
 
 export async function cancelAllOrders(req: Request, res: Response) {
   try {
-    const { category, symbol } = req.query;
+    const { symbol } = req.query;
 
-    if (!category || !symbol) {
+    const category = "inverse";
+
+    if (!symbol) {
       return res.status(400).json({
         message: "Missing required parameters",
         success: false,

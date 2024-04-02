@@ -2,16 +2,14 @@ import { Request, Response } from "express";
 import { sendMessage } from "../bot";
 import logger from "../utils/logger";
 import { formatMessage } from "../utils";
-import { submitOrder } from "./order";
+import { placeOrder } from "./order";
 import { getWalletBalance } from "./walletBalance";
 import { configs } from "../configs";
+import { AccountTypeV5, OrderSideV5, OrderResultV5 } from "bybit-api";
+import { getSymbolInfo } from "../common";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
-    logger.info("TradingView Webhook testing...");
-    console.log("Request bod:", req.body);
-    logger.info("Request body:", req.body);
-
     // Parse the body based on the Content-Type header
     let formattedMessage: string;
     if (req.is("json")) {
@@ -32,8 +30,16 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     // Send the message to Telegram
     sendMessage(formattedMessage);
 
+    const { minOrderSize, name } = await getSymbolInfo(req.body.ticker);
+    logger.info("minOrderSize: " + minOrderSize + " name: " + name);
+
+    let account_type: AccountTypeV5 = configs.accountType as AccountTypeV5;
+
     // Retrieve wallet balance
-    const { data, success, error } = await getWalletBalance("CONTRACT", "USDT");
+    const { data, success, error } = await getWalletBalance(
+      account_type,
+      configs.coin
+    );
     if (data === undefined) {
       throw new Error("Failed to retrieve account balance.");
     }
@@ -64,28 +70,46 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     });
 
     // Calculate order size
-    // const orderSizePercentage = configs.buyPercentage;
-    // logger.info({ orderSizePercentage });
+    const orderSizePercentage: number = configs.buyPercentage;
+    logger.info("orderSizePercentage:" + orderSizePercentage);
 
-    // const orderSize = balance * orderSizePercentage;
-    // logger.debug("Order size:", orderSize);
+    const orderSize: number = parseFloat(walletBalance) * orderSizePercentage;
+    logger.info("Order size: " + orderSize);
 
     // Get the close price from the TradingView webhook
-    // const closePrice = req.body.close;
+    const closePrice: number = req.body.close;
 
     // Calculate quantity
-    // const qty = orderSize / closePrice;
-    // logger.debug("Quantity:", qty);
+    const qty: number = orderSize / closePrice;
+    logger.info("Quantity: " + qty);
 
-    // const side = req.body.action;
-    // Submit order
-    // await submitOrder(req, res, {
-    //   category: "linear",
-    //   symbol: req.body.ticker,
-    //   side: side,
-    //   orderType: "Market",
-    //   qty: qty.toString(),
-    // });
+    const side: OrderSideV5 = req.body.action as OrderSideV5;
+    logger.info("Side: " + side);
+
+    // Submit order for short position
+    const orderResponse = await placeOrder(
+      "inverse",
+      req.body.ticker,
+      side,
+      "Market",
+      qty.toString()
+    );
+
+    // Check the retCode in the response
+    if (orderResponse.success === true) {
+      // Order placed successfully
+      const orderId = orderResponse.data?.result.orderId;
+      const message = `Order placed successfully. Order ID: ${orderId}`;
+      formattedMessage = await formatMessage(message);
+      sendMessage(formattedMessage);
+      logger.info(formattedMessage);
+    } else {
+      // Failed to place order
+      const errorMessage = `Failed to place order. Error: ${orderResponse.error}`;
+      formattedMessage = await formatMessage(errorMessage);
+      sendMessage(formattedMessage);
+      logger.error(formattedMessage);
+    }
 
     res.status(200).json({
       message: "TradingView Webhook received, & Trade executed successfully!",
