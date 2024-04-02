@@ -45,7 +45,7 @@ export async function walletBalance(req: Request, res: Response) {
     };
 
     const walletBalance: WalletBalanceV5 = await bybit.getWalletBalance(params);
-    logger.info("Wallet balance fetched successfully", walletBalance);
+    logger.info("Wallet balance fetched successfully");
 
     res.status(200).json({
       message: "Wallet balance fetched successfully",
@@ -66,7 +66,6 @@ export async function walletBalance(req: Request, res: Response) {
 // getWalletBalance function for the bot
 export async function getWalletBalance(accountType: AccountTypeV5, coin: any) {
   try {
-
     // Construct parameters object for getWalletBalance
     const params: GetWalletBalanceParamsV5 = {
       accountType: accountType as AccountTypeV5,
@@ -74,7 +73,7 @@ export async function getWalletBalance(accountType: AccountTypeV5, coin: any) {
     };
 
     const walletBalance: WalletBalanceV5 = await bybit.getWalletBalance(params);
-    logger.info("Wallet balance fetched successfully", walletBalance);
+    logger.info("Wallet balance fetched successfully");
 
     return {
       message: "Wallet balance fetched successfully",

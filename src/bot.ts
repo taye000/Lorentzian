@@ -186,10 +186,10 @@ bot.command("cancelorder", async (ctx: Context) => {
     const parts = message.split(" ");
     if (parts.length !== 4) {
       ctx.reply(
-        "Invalid command format. Usage: /cancelorder [category] [symbol] [orderId]. Valid categories: 'spot' | 'linear' | 'inverse' | 'option'. Example: /cancelorder linear BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
+        "Invalid command format. Usage: /cancelorder [symbol] [orderId]. Example: /cancelorder BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
       );
       throw new Error(
-        "Invalid command format. Usage: /cancelorder [category] [symbol] [orderId]. Valid categories: 'spot' | 'linear' | 'inverse' | 'option'. Example: /cancelorder linear BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
+        "Invalid command format. Usage: /cancelorder [symbol] [orderId]. Example: /cancelorder BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
       );
     }
 
@@ -232,10 +232,10 @@ bot.command("cancelallorders", async (ctx: Context) => {
     const parts = message.split(" ");
     if (parts.length !== 3) {
       ctx.reply(
-        "Invalid command format. Usage: /cancelallorders [category] [symbol]. Valid categories: 'spot' | 'linear' | 'inverse' | 'option'. Example: /cancelallorders linear BTCUSD"
+        "Invalid command format. Usage: /cancelallorders [symbol]. Example: /cancelallorders BTCUSD"
       );
       throw new Error(
-        "Invalid command format. Usage: /cancelallorders [category] [symbol]. Valid categories: 'spot' | 'linear' | 'inverse' | 'option'. Example: /cancelallorders linear BTCUSD"
+        "Invalid command format. Usage: /cancelallorders [symbol]. Example: /cancelallorders BTCUSD"
       );
     }
 
@@ -276,10 +276,10 @@ bot.command("positioninfo", async (ctx: Context) => {
     const parts = message.split(" ");
     if (parts.length < 2 || parts.length > 7) {
       ctx.reply(
-        "Invalid command format. Usage: /positioninfo [category] [symbol]. Valid categories: 'inverse', 'linear'. Example: /positioninfo inverse BTCUSD"
+        "Invalid command format. Usage: /positioninfo [symbol]. Example: /positioninfo BTCUSD"
       );
       throw new Error(
-        "Invalid command format. Usage: /positioninfo [category] [symbol]. Valid categories: 'inverse', 'linear'. Example: /positioninfo inverse BTCUSD"
+        "Invalid command format. Usage: /positioninfo [symbol]. Example: /positioninfo BTCUSD"
       );
     }
 
