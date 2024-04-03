@@ -16,11 +16,9 @@ export async function submitOrder(
   orderParams: OrderParamsV5
 ) {
   try {
-    const { symbol, side, orderType, qty } = req.query;
+    const { category, symbol, side, orderType, qty } = req.query;
 
-    const category = "inverse";
-
-    if (!symbol || !side || !orderType || !qty) {
+    if (!category || !symbol || !side || !orderType || !qty) {
       return res.status(400).json({
         message: "Missing required parameters",
         success: false,
