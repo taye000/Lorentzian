@@ -6,6 +6,7 @@ import {
   WalletBalanceV5,
 } from "bybit-api";
 import { bybit } from "../bot";
+import { configs } from "../configs";
 
 // walletBalance controller function for the API
 export async function walletBalance(req: Request, res: Response) {
@@ -44,15 +45,44 @@ export async function walletBalance(req: Request, res: Response) {
       coin: coin as string,
     };
 
-    const walletBalance: WalletBalanceV5 = (await bybit.getWalletBalance(
-      params
-    )) as WalletBalanceV5;
-    logger.info("Wallet balance fetched successfully");
+    let account_type: AccountTypeV5 = configs.accountType as AccountTypeV5;
+
+    // Retrieve wallet balance
+    const { data, success, error } = await getWalletBalance(
+      account_type,
+      configs.coin
+    );
+    if (data === undefined) {
+      throw new Error("Failed to retrieve account balance.");
+    }
+
+    // Destructure only the fields with values
+    const {
+      coin: [
+        {
+          availableToWithdraw,
+          equity,
+          walletBalance,
+          cumRealisedPnl,
+          unrealisedPnl,
+        },
+      ],
+    } = data;
+
+    logger.info("Wallet balance:", {
+      accountType,
+      coin,
+      availableToWithdraw,
+      equity,
+      walletBalance,
+      cumRealisedPnl,
+      unrealisedPnl,
+    });
 
     res.status(200).json({
       message: "Wallet balance fetched successfully",
       success: true,
-      data: walletBalance,
+      data: data,
     });
   } catch (error: any) {
     logger.error("Error fetching wallet balance", error);
@@ -77,7 +107,6 @@ export async function getWalletBalance(accountType: AccountTypeV5, coin: any) {
     const walletBalance: WalletBalanceV5 = (await bybit.getWalletBalance(
       params
     )) as WalletBalanceV5;
-    logger.info("Wallet balance fetched successfully");
 
     return {
       message: "Wallet balance fetched successfully",

@@ -25,8 +25,6 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       formattedMessage = req.body.toString();
     }
 
-    logger.info("Formatted message:", formattedMessage);
-
     // Send the message to Telegram
     sendMessage(formattedMessage);
 
@@ -71,9 +69,8 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
 
     // Calculate order size
     const orderSizePercentage: number = configs.buyPercentage;
-    logger.info("orderSizePercentage:" + orderSizePercentage);
 
-    const orderSize: number = parseFloat(walletBalance) * orderSizePercentage;
+    const orderSize: number = parseFloat(availableToWithdraw) * orderSizePercentage;
     logger.info("Order size: " + orderSize);
 
     // Get the close price from the TradingView webhook
@@ -94,9 +91,10 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       "Market",
       qty.toString()
     );
+    console.log("order response " + orderResponse)
 
     // Check the retCode in the response
-    if (orderResponse.success === true) {
+    if (orderResponse.data?.retCode === 0) {
       // Order placed successfully
       const orderId = orderResponse.data?.result.orderId;
       const message = `Order placed successfully. Order ID: ${orderId}`;
