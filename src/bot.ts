@@ -11,6 +11,7 @@ import { BybitWrapper } from "./bybit";
 import {
   AccountTypeV5,
   CancelOrderParamsV5,
+  CategoryV5,
   GetWalletBalanceParamsV5,
   PositionInfoParamsV5,
 } from "bybit-api";
@@ -66,16 +67,16 @@ bot.help(async (ctx: Context) => {
   const helpMessage = `
   🤖 *Welcome to the Lorentzian Bot* 🤖
     Available Commands:
-    /balance [accountType] [coin] \\- Check wallet balance for the specified account type and coin\\. 
-    /order [category] [symbol] [side] [orderType] [qty] \\- Submit a new order\\. 
-    /cancelorder [category] [symbol] [orderId] \\- Cancel a specific order\\. 
-    /cancelallorders [category] [symbol] \\- Cancel all orders for the specified symbol\\. 
-    /positioninfo [category] [symbol] \\- Fetch position information for the specified category and symbol\\. 
+    /bal [accountType] [coin] \\- Check wallet balance for the specified account type and coin\\. 
+    /order [symbol] [side] [orderType] [qty] \\- Submit a new order\\. 
+    /cancel [symbol] [orderId] \\- Cancel a specific order\\. 
+    /cancelall [symbol] \\- Cancel all orders for the specified symbol\\. 
+    /position [symbol] \\- Fetch position information for the specified symbol\\. 
     `;
   await ctx.replyWithMarkdownV2(helpMessage);
 });
 
-bot.command("balance", async (ctx: Context) => {
+bot.command("bal", async (ctx: Context) => {
   try {
     // Extract the parameters from the user's message
     const message = (ctx.message as any)?.text;
@@ -88,10 +89,10 @@ bot.command("balance", async (ctx: Context) => {
     const parts = message.split(" ");
     if (parts.length !== 3) {
       ctx.reply(
-        "Invalid command format. Usage: /balance [accountType] [coin]. Valid a/c types: CONTRACT, SPOT,INVESTMENT, OPTION, UNIFIED,FUND. Example: /balance SPOT USDT"
+        "Invalid command format. Usage: /bal [accountType] [coin]. Valid a/c types: CONTRACT, SPOT,INVESTMENT, OPTION, UNIFIED,FUND. Example: /bal SPOT USDT"
       );
       throw new Error(
-        "Invalid command format. Usage: /balance [accountType] [coin]. Valid a/c types: CONTRACT, SPOT,INVESTMENT, OPTION, UNIFIED,FUND. Example: /balance SPOT USDT"
+        "Invalid command format. Usage: /bal [accountType] [coin]. Valid a/c types: CONTRACT, SPOT,INVESTMENT, OPTION, UNIFIED,FUND. Example: /bal SPOT USDT"
       );
     }
 
@@ -132,20 +133,20 @@ bot.command("order", async (ctx: Context) => {
 
     // Split the message into parts and extract relevant parameters
     const parts = message.split(" ");
-    if (parts.length !== 6) {
+    if (parts.length !== 5) {
       ctx.reply(
-        "Invalid command format. Usage: /order [category] [symbol] [side] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order spot BTCUSD buy market 100"
+        "Invalid command format. Usage: /order [symbol] [side] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order BTCUSD buy market 100"
       );
       throw new Error(
-        "Invalid command format. Usage: /order [category] [symbol] [side] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order spot BTCUSD buy market 100"
+        "Invalid command format. Usage: /order [symbol] [side] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order BTCUSD buy market 100"
       );
     }
 
-    const category = parts[1];
-    const symbol = parts[2];
-    const side = parts[3];
-    const orderType = parts[4];
-    const qty = parts[5];
+    const symbol = parts[1];
+    const side = parts[2];
+    const orderType = parts[3];
+    const qty = parts[4];
+    let category = "inverse" as CategoryV5;
 
     // Construct the params object
     const params = {
@@ -173,7 +174,7 @@ bot.command("order", async (ctx: Context) => {
   }
 });
 
-bot.command("cancelorder", async (ctx: Context) => {
+bot.command("cancel", async (ctx: Context) => {
   try {
     // Extract the parameters from the user's message
     const message = (ctx.message as any)?.text;
@@ -184,19 +185,20 @@ bot.command("cancelorder", async (ctx: Context) => {
 
     // Split the message into parts and extract relevant parameters
     const parts = message.split(" ");
-    if (parts.length !== 4) {
+    if (parts.length !== 3) {
       ctx.reply(
-        "Invalid command format. Usage: /cancelorder [symbol] [orderId]. Example: /cancelorder BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
+        "Invalid command format. Usage: /cancel [symbol] [orderId]. Example: /cancel BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
       );
       throw new Error(
-        "Invalid command format. Usage: /cancelorder [symbol] [orderId]. Example: /cancelorder BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
+        "Invalid command format. Usage: /cancel [symbol] [orderId]. Example: /cancel BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
       );
     }
 
-    const category = parts[1];
-    const symbol = parts[2];
-    const orderId = parts[3];
+    const symbol = parts[1];
+    const orderId = parts[2];
 
+    const category = "inverse" as CategoryV5;
+    
     // Construct the params object
     const params: CancelOrderParamsV5 = {
       category,
@@ -219,7 +221,7 @@ bot.command("cancelorder", async (ctx: Context) => {
   }
 });
 
-bot.command("cancelallorders", async (ctx: Context) => {
+bot.command("cancelall", async (ctx: Context) => {
   try {
     // Extract the parameters from the user's message
     const message = (ctx.message as any)?.text;
@@ -230,17 +232,18 @@ bot.command("cancelallorders", async (ctx: Context) => {
 
     // Split the message into parts and extract relevant parameters
     const parts = message.split(" ");
-    if (parts.length !== 3) {
+    if (parts.length !== 2) {
       ctx.reply(
-        "Invalid command format. Usage: /cancelallorders [symbol]. Example: /cancelallorders BTCUSD"
+        "Invalid command format. Usage: /cancelall [symbol]. Example: /cancelall BTCUSD"
       );
       throw new Error(
-        "Invalid command format. Usage: /cancelallorders [symbol]. Example: /cancelallorders BTCUSD"
+        "Invalid command format. Usage: /cancelall [symbol]. Example: /cancelall BTCUSD"
       );
     }
 
-    const category = parts[1];
-    const symbol = parts[2];
+    const symbol = parts[1];
+
+    const category = "inverse" as CategoryV5;
 
     // Construct the params object
     const params: CancelOrderParamsV5 = {
@@ -263,7 +266,7 @@ bot.command("cancelallorders", async (ctx: Context) => {
   }
 });
 
-bot.command("positioninfo", async (ctx: Context) => {
+bot.command("position", async (ctx: Context) => {
   try {
     // Extract the parameters from the user's message
     const message = (ctx.message as any)?.text;
@@ -274,17 +277,18 @@ bot.command("positioninfo", async (ctx: Context) => {
 
     // Split the message into parts and extract relevant parameters
     const parts = message.split(" ");
-    if (parts.length < 2 || parts.length > 7) {
+    if (parts.length > 2) {
       ctx.reply(
-        "Invalid command format. Usage: /positioninfo [symbol]. Example: /positioninfo BTCUSD"
+        "Invalid command format. Usage: /position [symbol]. Example: /position BTCUSD"
       );
       throw new Error(
-        "Invalid command format. Usage: /positioninfo [symbol]. Example: /positioninfo BTCUSD"
+        "Invalid command format. Usage: /position [symbol]. Example: /position BTCUSD"
       );
     }
 
-    const category = parts[1];
-    const symbol = parts[2];
+    const symbol = parts[1];
+
+    const category = "inverse" as CategoryV5;
 
     // Construct the params object
     const params: PositionInfoParamsV5 = {
@@ -311,7 +315,11 @@ bot.command("positioninfo", async (ctx: Context) => {
 });
 
 bot.on(message("text"), async (ctx: Context) => {
-  await ctx.reply("👍");
+  const welcomeMessage = await formatMessage(
+    `Hello ${ctx.from?.first_name}!, That was an unsupported command.
+    /help to see available commands.`
+  );
+  await ctx.replyWithMarkdownV2(welcomeMessage);
 });
 
 export { bot, sendMessage };
