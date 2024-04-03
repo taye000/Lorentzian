@@ -22,25 +22,43 @@ export const formatMessage = async (message: string | undefined) => {
 
 // Function to format and summarize the wallet balance
 export const formatWalletBalance = (walletBalance: any) => {
-  // Extract relevant information from wallet balance object
-  const totalWalletBalance = walletBalance.totalWalletBalance;
-  const totalAvailableBalance = walletBalance.totalAvailableBalance;
-  const coinBalances = walletBalance.coin.map((coin: any) => ({
-    coin: coin.coin,
-    balance: coin.walletBalance,
-  }));
+  try {
+    // Extract relevant information from wallet balance object
+    const {
+      coin,
+      availableToWithdraw,
+      equity,
+      walletBalance: totalWalletBalance,
+      cumRealisedPnl,
+      unrealisedPnl,
+    } = walletBalance[0];
 
-  // Construct the summarized message
-  let summaryMessage = `🔹 Wallet Balance Summary 🔹\n\n`;
-  summaryMessage += `Total Wallet Balance: $${totalWalletBalance}\n`;
-  summaryMessage += `Available Balance: $${totalAvailableBalance}\n\n`;
-  summaryMessage += `Coin Balances:\n`;
-  coinBalances.forEach((coin: any) => {
-    summaryMessage += `- ${coin.coin}: $${coin.balance}\n`;
-  });
+    // Construct the summarized message
+    let summaryMessage = `🔹 Wallet Balance Summary 🔹\n\n`;
+    summaryMessage += `Total Wallet Balance: $${totalWalletBalance}\n`;
+    summaryMessage += `Available to Withdraw: $${availableToWithdraw}\n`;
+    summaryMessage += `Equity: $${equity}\n`;
+    summaryMessage += `Cumulative Realised PnL: $${cumRealisedPnl}\n`;
+    summaryMessage += `Unrealised PnL: $${unrealisedPnl}\n\n`;
+    
+    // Check if coin is a string (not an array)
+    if (typeof coin === 'string') {
+      summaryMessage += `- ${coin}: $${totalWalletBalance}\n`;
+    } else {
+      // Loop through each coin balance
+      coin.forEach((coinBalance: any) => {
+        summaryMessage += `- ${coinBalance.coin}: $${coinBalance.walletBalance}\n`;
+      });
+    }
 
-  return summaryMessage;
+    return summaryMessage;
+  } catch (error) {
+    console.error("Error formatting wallet balance:", error);
+    return "Error formatting wallet balance";
+  }
 };
+
+
 
 export const formatPositionInfo = (positionInfo: any) => {
   // Example: Assuming positionInfo is an object with properties like size, entryPrice, etc.
