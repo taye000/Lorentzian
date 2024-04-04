@@ -10,9 +10,13 @@ import logger from "./utils/logger";
 import { BybitWrapper } from "./bybit";
 import {
   AccountTypeV5,
+  CancelAllOrdersParamsV5,
   CancelOrderParamsV5,
   CategoryV5,
   GetWalletBalanceParamsV5,
+  OrderParamsV5,
+  OrderSideV5,
+  OrderTypeV5,
   PositionInfoParamsV5,
 } from "bybit-api";
 
@@ -87,12 +91,12 @@ bot.command("bal", async (ctx: Context) => {
 
     // Split the message into parts and extract relevant parameters
     const parts = message.split(" ");
-    if (parts.length !== 3) {
+    if (parts.length !== 2) {
       ctx.reply(
-        "Invalid command format. Usage: /bal [accountType] [coin]. Valid a/c types: CONTRACT, SPOT,INVESTMENT, OPTION, UNIFIED,FUND. Example: /bal SPOT USDT"
+        "Invalid command format. Usage: /bal [accountType]. Valid a/c types: CONTRACT, SPOT,INVESTMENT, OPTION, UNIFIED,FUND. Example: /bal SPOT"
       );
       throw new Error(
-        "Invalid command format. Usage: /bal [accountType] [coin]. Valid a/c types: CONTRACT, SPOT,INVESTMENT, OPTION, UNIFIED,FUND. Example: /bal SPOT USDT"
+        "Invalid command format. Usage: /bal [accountType]. Valid a/c types: CONTRACT, SPOT,INVESTMENT, OPTION, UNIFIED,FUND. Example: /bal SPOT"
       );
     }
 
@@ -108,7 +112,7 @@ bot.command("bal", async (ctx: Context) => {
     // Fetch the wallet balance using the provided parameters
     const bal = await bybit.getWalletBalance(params);
     const walletBalance = bal?.coin;
-    
+
     // Check if wallet balance data is empty or null
     if (!walletBalance) {
       throw new Error("Empty wallet balance data");
@@ -136,10 +140,10 @@ bot.command("order", async (ctx: Context) => {
     const parts = message.split(" ");
     if (parts.length !== 5) {
       ctx.reply(
-        "Invalid command format. Usage: /order [symbol] [side] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order BTCUSD buy market 100"
+        "Invalid command format. Usage: /order [side] [symbol] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order Buy BTCUSD market 100"
       );
       throw new Error(
-        "Invalid command format. Usage: /order [symbol] [side] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order BTCUSD buy market 100"
+        "Invalid command format. Usage: /order [side] [symbol] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order Buy BTCUSD market 100"
       );
     }
 
@@ -147,15 +151,18 @@ bot.command("order", async (ctx: Context) => {
     const side = parts[2];
     const orderType = parts[3];
     const qty = parts[4];
-    let category = "inverse" as CategoryV5;
+    let category: CategoryV5 = "inverse";
 
     // Construct the params object
-    const params = {
-      category,
-      symbol,
-      side,
-      orderType,
-      qty,
+    const params: OrderParamsV5 = {
+      category: category as CategoryV5,
+      symbol: symbol as string,
+      side: side as OrderSideV5,
+      orderType: orderType as OrderTypeV5,
+      qty: qty as string,
+      // isLeverage,
+      // takeProfit,
+      // stopLoss,
     };
 
     // Submit the order using the provided parameters
@@ -186,25 +193,23 @@ bot.command("cancel", async (ctx: Context) => {
 
     // Split the message into parts and extract relevant parameters
     const parts = message.split(" ");
-    if (parts.length !== 3) {
+    if (parts.length !== 2) {
       ctx.reply(
-        "Invalid command format. Usage: /cancel [symbol] [orderId]. Example: /cancel BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
+        "Invalid command format. Usage: /cancel [symbol]. Example: /cancel BTCUSD"
       );
       throw new Error(
-        "Invalid command format. Usage: /cancel [symbol] [orderId]. Example: /cancel BTCUSD c6f055d9-7f21-4079-913d-e6523a9cfffa"
+        "Invalid command format. Usage: /cancel [symbol]. Example: /cancel BTCUSD"
       );
     }
 
     const symbol = parts[1];
-    const orderId = parts[2];
 
-    const category = "inverse" as CategoryV5;
-    
+    let category: CategoryV5 = "inverse";
+
     // Construct the params object
     const params: CancelOrderParamsV5 = {
       category,
       symbol,
-      orderId,
     };
 
     // Cancel the order using the provided parameters
@@ -233,23 +238,20 @@ bot.command("cancelall", async (ctx: Context) => {
 
     // Split the message into parts and extract relevant parameters
     const parts = message.split(" ");
-    if (parts.length !== 2) {
+    if (parts.length !== 1) {
       ctx.reply(
-        "Invalid command format. Usage: /cancelall [symbol]. Example: /cancelall BTCUSD"
+        "Invalid command format. Usage: /cancelall. Example: /cancelall"
       );
       throw new Error(
-        "Invalid command format. Usage: /cancelall [symbol]. Example: /cancelall BTCUSD"
+        "Invalid command format. Usage: /cancelall. Example: /cancelall"
       );
     }
 
-    const symbol = parts[1];
-
-    const category = "inverse" as CategoryV5;
+    let category: CategoryV5 = "inverse";
 
     // Construct the params object
-    const params: CancelOrderParamsV5 = {
+    const params: CancelAllOrdersParamsV5 = {
       category,
-      symbol,
     };
 
     // Cancel all orders using the provided parameters
@@ -280,16 +282,20 @@ bot.command("position", async (ctx: Context) => {
     const parts = message.split(" ");
     if (parts.length > 2) {
       ctx.reply(
-        "Invalid command format. Usage: /position [symbol]. Example: /position BTCUSD"
+        "Invalid command format. Usage: /position or /position [symbol]. Example: /position or /position BTCUSDT"
       );
       throw new Error(
-        "Invalid command format. Usage: /position [symbol]. Example: /position BTCUSD"
+        "Invalid command format. Usage: /position or /position [symbol]. Example: /position or /position BTCUSDT"
       );
     }
 
-    const symbol = parts[1];
+    let symbol: string | undefined;
+    const category: CategoryV5 = "inverse";
 
-    const category = "inverse" as CategoryV5;
+    // Check if a symbol is provided
+    if (parts.length === 2) {
+      symbol = parts[1];
+    }
 
     // Construct the params object
     const params: PositionInfoParamsV5 = {
@@ -298,17 +304,21 @@ bot.command("position", async (ctx: Context) => {
     };
 
     // Fetch the position info using the provided parameters
-    const positionInfo = await bybit.getPositionInfo(params);
+    const data = await bybit.getPositionInfo(params);
 
-    // Check if position info data is empty or null
-    if (!positionInfo) {
+    const positionInfo = data?.list;
+
+    if (!positionInfo || positionInfo.length < 1) {
+      await ctx.reply("Empty position info data");
       throw new Error("Empty position info data");
-    }
+    } else {
+      console.log({ data });
 
-    // Format and summarize the position info
-    // You can customize this based on the response structure
-    const summaryMessage = formatPositionInfo(positionInfo);
-    await ctx.reply(summaryMessage);
+      // Format and summarize the position info
+      // You can customize this based on the response structure
+      const summaryMessage = formatPositionInfo(positionInfo);
+      await ctx.reply(summaryMessage);
+    }
   } catch (error: any) {
     ctx.reply("Error fetching position info, try again.", error);
     logger.error("Error fetching position info", error);

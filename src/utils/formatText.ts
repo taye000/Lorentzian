@@ -40,9 +40,9 @@ export const formatWalletBalance = (walletBalance: any) => {
     summaryMessage += `Equity: $${equity}\n`;
     summaryMessage += `Cumulative Realised PnL: $${cumRealisedPnl}\n`;
     summaryMessage += `Unrealised PnL: $${unrealisedPnl}\n\n`;
-    
+
     // Check if coin is a string (not an array)
-    if (typeof coin === 'string') {
+    if (typeof coin === "string") {
       summaryMessage += `- ${coin}: $${totalWalletBalance}\n`;
     } else {
       // Loop through each coin balance
@@ -58,9 +58,29 @@ export const formatWalletBalance = (walletBalance: any) => {
   }
 };
 
-
-
 export const formatPositionInfo = (positionInfo: any) => {
-  // Example: Assuming positionInfo is an object with properties like size, entryPrice, etc.
-  return `Position Info:\nSize: ${positionInfo.size}\nEntry Price: ${positionInfo.entryPrice}\n...`;
+  if (positionInfo.length === 0) {
+    return "No open positions";
+  }
+
+  const formattedPositions = positionInfo.map((position: any) => {
+    return `
+Position Index: ${position.positionIdx}
+Symbol: ${position.symbol}
+Side: ${position.side}
+Size: ${position.size}
+Average Price: ${position.avgPrice}
+Position Value: ${position.positionValue}
+Leverage: ${position.leverage}
+Mark Price: ${position.markPrice}
+Liq Price: ${position.liqPrice}
+Take Profit: ${position.takeProfit}
+Stop Loss: ${position.stopLoss}
+Unrealised PnL: ${position.unrealisedPnl}
+Cumulative Realised PnL: ${position.cumRealisedPnl}
+Position Status: ${position.positionStatus}
+    `;
+  });
+
+  return formattedPositions.join("\n");
 };

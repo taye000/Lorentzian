@@ -5,9 +5,10 @@ import { CategoryV5, PositionInfoParamsV5 } from "bybit-api";
 
 export async function getPositionInfo(req: Request, res: Response) {
   try {
-    const { category, symbol } = req.query;
+    const { category } = req.query;
+    logger.info("categoryy " + category);
 
-    if (!category || !symbol) {
+    if (!category) {
       return res.status(400).json({
         message: "Missing required parameters",
         success: false,
@@ -31,7 +32,6 @@ export async function getPositionInfo(req: Request, res: Response) {
 
     const params: PositionInfoParamsV5 = {
       category: category as CategoryV5,
-      symbol: symbol as string,
     };
 
     const positionInfo = await bybit.getPositionInfo(params);
