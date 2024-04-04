@@ -12,10 +12,10 @@ import { configs } from "../configs";
 export async function walletBalance(req: Request, res: Response) {
   try {
     // Extract query parameters from the request
-    const { accountType, coin } = req.query;
+    const { accountType } = req.query;
 
     // Check if required parameters are provided
-    if (!accountType || !coin) {
+    if (!accountType) {
       return res.status(400).json({
         message: "Missing required query parameters",
         success: false,
@@ -42,16 +42,12 @@ export async function walletBalance(req: Request, res: Response) {
     // Construct parameters object for getWalletBalance
     const params: GetWalletBalanceParamsV5 = {
       accountType: accountType as AccountTypeV5,
-      coin: coin as string,
     };
 
     let account_type: AccountTypeV5 = configs.accountType as AccountTypeV5;
 
     // Retrieve wallet balance
-    const { data, success, error } = await getWalletBalance(
-      account_type,
-      configs.coin
-    );
+    const { data, success, error } = await getWalletBalance(account_type);
     if (data === undefined) {
       throw new Error("Failed to retrieve account balance.");
     }
@@ -71,7 +67,6 @@ export async function walletBalance(req: Request, res: Response) {
 
     logger.info("Wallet balance:", {
       accountType,
-      coin,
       availableToWithdraw,
       equity,
       walletBalance,
@@ -96,12 +91,11 @@ export async function walletBalance(req: Request, res: Response) {
 }
 
 // getWalletBalance function for the bot
-export async function getWalletBalance(accountType: AccountTypeV5, coin: any) {
+export async function getWalletBalance(accountType: AccountTypeV5) {
   try {
     // Construct parameters object for getWalletBalance
     const params: GetWalletBalanceParamsV5 = {
       accountType: accountType as AccountTypeV5,
-      coin: coin as string,
     };
 
     const walletBalance: WalletBalanceV5 = (await bybit.getWalletBalance(

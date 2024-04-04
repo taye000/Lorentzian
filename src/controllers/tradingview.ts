@@ -34,10 +34,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     let account_type: AccountTypeV5 = configs.accountType as AccountTypeV5;
 
     // Retrieve wallet balance
-    const { data, success, error } = await getWalletBalance(
-      account_type,
-      configs.coin
-    );
+    const { data, success, error } = await getWalletBalance(account_type);
     if (data === undefined) {
       throw new Error("Failed to retrieve account balance.");
     }
@@ -70,7 +67,8 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     // Calculate order size
     const orderSizePercentage: number = configs.buyPercentage;
 
-    const orderSize: number = parseFloat(availableToWithdraw) * orderSizePercentage;
+    const orderSize: number =
+      parseFloat(availableToWithdraw) * orderSizePercentage;
     logger.info("Order size: " + orderSize);
 
     // Get the close price from the TradingView webhook
@@ -91,7 +89,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       "Market",
       qty.toString()
     );
-    console.log("order response " + orderResponse)
+    console.log("order response " + orderResponse);
 
     // Check the retCode in the response
     if (orderResponse.data?.retCode === 0) {
@@ -125,3 +123,9 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+
+//TODO 1: https://bybit-exchange.github.io/docs/v5/account/fee-rate
+//TODO 2: https://bybit-exchange.github.io/docs/v5/asset/coin-info
+//TODO 3: https://bybit-exchange.github.io/docs/v5/order/amend-order

@@ -4,6 +4,7 @@ import {
   OrderParamsV5,
   CancelOrderParamsV5,
   PositionInfoParamsV5,
+  CancelAllOrdersParamsV5,
 } from "bybit-api";
 import logger from "./utils/logger";
 
@@ -61,7 +62,7 @@ export class BybitWrapper {
     }
   }
 
-  async cancelAllOrders(params: CancelOrderParamsV5) {
+  async cancelAllOrders(params: CancelAllOrdersParamsV5) {
     try {
       const orders = await this.client.cancelAllOrders(params);
       if (orders.retCode !== 0) {
@@ -87,5 +88,5 @@ export class BybitWrapper {
       logger.error("Error getting position info", error);
       throw error;
     }
-  }  
+  }
 }
