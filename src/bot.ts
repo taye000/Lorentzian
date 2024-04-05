@@ -142,10 +142,10 @@ bot.command("order", async (ctx: Context) => {
     const parts = message.split(" ");
     if (parts.length !== 5) {
       ctx.reply(
-        "Invalid command format. Usage: /order [side] [symbol] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order Buy BTCUSD market 100"
+        "Invalid command format. Usage: /order [side] [symbol] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order Buy BTCUSD market 100."
       );
       throw new Error(
-        "Invalid command format. Usage: /order [side] [symbol] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order Buy BTCUSD market 100"
+        "Invalid command format. Usage: /order [side] [symbol] [orderType] [qty]. Valid orderTypes: 'Market' | 'Limit'. Example: /order Buy BTCUSD market 100."
       );
     }
 
@@ -172,7 +172,7 @@ bot.command("order", async (ctx: Context) => {
     }
 
     await ctx.reply(
-      `Order submitted successfully. Order ID: ${order.orderId}, Order Link ID: ${order.orderLinkId}`
+      `Order submitted successfully. Order ID: ${order.id}, Order Link ID: ${order.orderLinkId}`
     );
   } catch (error: any) {
     ctx.reply("Error submitting order, try again.", error);

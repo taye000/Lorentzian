@@ -12,6 +12,8 @@ const buyPercentage = process.env.BUY_PERCENTAGE;
 const accountType = process.env.ACCOUNT_TYPE;
 const coin = process.env.COIN;
 const leverage = process.env.LEVERAGE;
+const tpPercentage = process.env.TP_PERCENTAGE;
+const slPercentage = process.env.SL_PERCENTAGE;
 
 if (!botToken) {
   logger.error("Error: BOT_TOKEN environment variable is missing.");
@@ -67,6 +69,8 @@ export const configs = {
   accountType,
   coin,
   leverage,
+  tpPercentage,
+  slPercentage,
   bybit: {
     apiKey,
     apiSecret,

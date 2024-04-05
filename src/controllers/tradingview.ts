@@ -12,8 +12,7 @@ import {
   OrderParamsV5,
   CategoryV5,
 } from "bybit-api";
-import { getSymbolInfo } from "../common";
-import { getInstruments } from "./market";
+import { calculateTPSL, countDecimalPlaces, getSymbolInfo } from "../common";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
@@ -40,6 +39,9 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     const orderSizePercentage: number = configs.buyPercentage;
     let leverage: number = parseFloat(configs.leverage);
 
+    const { takeProfit, stopLoss } = calculateTPSL(closePrice, side);
+    console.log(`Take Profit: ${takeProfit}, Stop Loss: ${stopLoss}`);
+
     // Send the message to Telegram
     sendMessage(formattedMessage);
 
@@ -47,8 +49,8 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     let minOrder = minOrderSize.toString();
     logger.info("minOrderSize: " + minOrderSize + " name: " + name);
 
-    // const getInstrumentsinfo = await getInstruments(req.body.ticker);
-    // console.log("getInstrumentsinfo", getInstrumentsinfo?.list);
+    let coinDecimalPlaces = countDecimalPlaces(minOrderSize);
+    console.log({ coinDecimalPlaces });
 
     let account_type: AccountTypeV5 = configs.accountType as AccountTypeV5;
 
@@ -83,8 +85,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       unrealisedPnl,
     });
 
-    const orderSize: number =
-      parseFloat(availableToWithdraw) * orderSizePercentage;
+    const orderSize: number = parseFloat(equity) * orderSizePercentage;
     // logger.info("Order size: " + orderSize);
 
     const orderSizeWithLeverage: number = orderSize * leverage;
@@ -94,20 +95,14 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     const quantityAllowed: number = orderSizeWithLeverage / closePrice;
     // logger.info("Quantity: " + qty);
 
-    let coinDecimalPlaces;
-    if (symbol === "BTCUSDT") {
-      coinDecimalPlaces = 3;
-    } else if (symbol === "ETHUSDT") {
-      coinDecimalPlaces = 2;
-    }
-    console.log({ coinDecimalPlaces });
-
     let qty: string;
     if (quantityAllowed < minOrder) {
       qty = minOrder.toString();
     } else {
       qty = quantityAllowed.toFixed(coinDecimalPlaces);
     }
+    console.log({ quantityAllowed });
+    console.log({ minOrder });
     console.log({ qty });
 
     const orderData: OrderParamsV5 = {
@@ -116,18 +111,20 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       side: side,
       orderType: "Market",
       qty: qty,
+      stopLoss: stopLoss,
+      takeProfit: takeProfit,
     };
 
     console.log({ orderData });
 
     // Submit order for short position
     const orderResponse = await placeOrder(orderData);
-    console.log("order response " + orderResponse.data);
+    console.log({orderResponse});
 
     // Check the retCode in the response
     if (orderResponse.success) {
       // Order placed successfully
-      console.log("Order placed successfully", orderResponse.message);
+      console.log("Order placed successfully", orderResponse.data);
       // const orderId = orderResponse.data?.result.orderId;
       const message = `Order placed successfully: ${orderResponse.data}`;
       formattedMessage = await formatMessage(message);
