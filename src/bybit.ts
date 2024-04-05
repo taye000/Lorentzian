@@ -38,12 +38,22 @@ export class BybitWrapper {
 
   async submitOrder(params: OrderParamsV5) {
     try {
-      const {retCode, retMsg, result} = await this.client.submitOrder(params);
-      if (retCode !== 0) {
-        logger.error("Error creating order", result);
+      const { retCode, retMsg, result } = await this.client.submitOrder(params);
+      if (retCode === 0 && result) {
+        return {
+          id: result.orderId,
+          orderLinkId: result.orderLinkId,
+          market: params.symbol,
+          side: params.side,
+          type: params.orderType,
+          quantity: Number(params.qty),
+        };
+      } else {
+        return {
+          retCode,
+          retMsg,
+        };
       }
-      logger.info(retMsg);
-      return result;
     } catch (error: any) {
       logger.error("Error creating order", error);
       throw error;
