@@ -18,6 +18,7 @@ import {
   OrderSideV5,
   OrderTypeV5,
   PositionInfoParamsV5,
+  SetLeverageParamsV5,
 } from "bybit-api";
 
 const bot = new Telegraf(configs.bot_token!);
@@ -75,7 +76,8 @@ bot.help(async (ctx: Context) => {
     /order [symbol] [side] [orderType] [qty] \\- Submit a new order\\. 
     /cancel [symbol] [orderId] \\- Cancel a specific order\\. 
     /cancelall [symbol] \\- Cancel all orders for the specified symbol\\. 
-    /position [symbol] \\- Fetch position information for the specified symbol\\. 
+    /position [symbol] \\- Fetch position information for the specified symbol\\.
+    /setleverage [symbol] [buyLeverage] [sellLeverage] \\- Set leverage for trading on the specified symbol\\.
     `;
   await ctx.replyWithMarkdownV2(helpMessage);
 });
@@ -147,11 +149,8 @@ bot.command("order", async (ctx: Context) => {
       );
     }
 
-    const symbol = parts[1];
-    const side = parts[2];
-    const orderType = parts[3];
-    const qty = parts[4];
-    let category: CategoryV5 = "inverse";
+    const [side, symbol, orderType, qty] = parts.slice(1);
+    let category: CategoryV5 = "linear";
 
     // Construct the params object
     const params: OrderParamsV5 = {
@@ -160,7 +159,6 @@ bot.command("order", async (ctx: Context) => {
       side: side as OrderSideV5,
       orderType: orderType as OrderTypeV5,
       qty: qty as string,
-      // isLeverage,
       // takeProfit,
       // stopLoss,
     };
@@ -174,7 +172,7 @@ bot.command("order", async (ctx: Context) => {
     }
 
     await ctx.reply(
-      `Order submitted successfully. Order ID: ${order.result.orderId}, Order Link ID: ${order.result.orderLinkId}`
+      `Order submitted successfully. Order ID: ${order.orderId}, Order Link ID: ${order.orderLinkId}`
     );
   } catch (error: any) {
     ctx.reply("Error submitting order, try again.", error);
@@ -204,7 +202,7 @@ bot.command("cancel", async (ctx: Context) => {
 
     const symbol = parts[1];
 
-    let category: CategoryV5 = "inverse";
+    let category: CategoryV5 = "linear";
 
     // Construct the params object
     const params: CancelOrderParamsV5 = {
@@ -247,7 +245,7 @@ bot.command("cancelall", async (ctx: Context) => {
       );
     }
 
-    let category: CategoryV5 = "inverse";
+    let category: CategoryV5 = "linear";
 
     // Construct the params object
     const params: CancelAllOrdersParamsV5 = {
@@ -280,7 +278,7 @@ bot.command("position", async (ctx: Context) => {
 
     // Split the message into parts and extract relevant parameters
     const parts = message.split(" ");
-    if (parts.length > 2) {
+    if (parts.length < 2) {
       ctx.reply(
         "Invalid command format. Usage: /position or /position [symbol]. Example: /position or /position BTCUSDT"
       );
@@ -290,7 +288,7 @@ bot.command("position", async (ctx: Context) => {
     }
 
     let symbol: string | undefined;
-    const category: CategoryV5 = "inverse";
+    const category: CategoryV5 = "linear";
 
     // Check if a symbol is provided
     if (parts.length === 2) {
@@ -322,6 +320,54 @@ bot.command("position", async (ctx: Context) => {
   } catch (error: any) {
     ctx.reply("Error fetching position info, try again.", error);
     logger.error("Error fetching position info", error);
+  }
+});
+
+bot.command("setleverage", async (ctx: Context) => {
+  try {
+    // Extract the parameters from the user's message
+    const message = (ctx.message as any)?.text;
+    if (!message) {
+      ctx.reply("Invalid message format");
+      throw new Error("Invalid message format");
+    }
+
+    // Split the message into parts and extract relevant parameters
+    const parts = message.split(" ");
+    if (parts.length !== 4) {
+      ctx.reply(
+        "Invalid command format. Usage: /setleverage [symbol] [buyLeverage] [sellLeverage]. Example: /setleverage BTCUSDT 10 10"
+      );
+      throw new Error(
+        "Invalid command format. Usage: /setleverage [symbol] [buyLeverage] [sellLeverage]. Example: /setleverage BTCUSDT 10 10"
+      );
+    }
+
+    const symbol = parts[1];
+    const buyLeverage = parts[2];
+    const sellLeverage = parts[3];
+    const category: CategoryV5 = "linear";
+
+    const params: SetLeverageParamsV5 = {
+      category,
+      symbol,
+      buyLeverage,
+      sellLeverage,
+    };
+
+    // Call the method to set leverage
+    const data = await bybit.setLeverage(params);
+    console.log({ data });
+
+    // Check if leverage was set successfully
+    // if (data?.retCode !== 0) {
+    //   throw new Error(data.retMsg);
+    // }
+
+    await ctx.reply("Leverage request sent");
+  } catch (error: any) {
+    ctx.reply("Error setting leverage, try again.", error);
+    logger.error("Error setting leverage", error);
   }
 });
 

@@ -5,6 +5,8 @@ import {
   CancelOrderParamsV5,
   PositionInfoParamsV5,
   CancelAllOrdersParamsV5,
+  SetLeverageParamsV5,
+  GetInstrumentsInfoParamsV5,
 } from "bybit-api";
 import logger from "./utils/logger";
 
@@ -36,12 +38,12 @@ export class BybitWrapper {
 
   async submitOrder(params: OrderParamsV5) {
     try {
-      const order = await this.client.submitOrder(params);
-      if (order.retCode !== 0) {
-        logger.error("Error creating order", order);
+      const {retCode, retMsg, result} = await this.client.submitOrder(params);
+      if (retCode !== 0) {
+        logger.error("Error creating order", result);
       }
-      logger.info(order);
-      return order;
+      logger.info(retMsg);
+      return result;
     } catch (error: any) {
       logger.error("Error creating order", error);
       throw error;
@@ -86,6 +88,34 @@ export class BybitWrapper {
       }
     } catch (error: any) {
       logger.error("Error getting position info", error);
+      throw error;
+    }
+  }
+
+  async setLeverage(params: SetLeverageParamsV5) {
+    try {
+      const setLeverage = await this.client.setLeverage(params);
+      if (setLeverage.retCode === 0 && setLeverage.retMsg === "OK") {
+        return setLeverage.result;
+      } else {
+        logger.error("Error setting leverage info", setLeverage);
+      }
+    } catch (error: any) {
+      logger.error("Error setting leverage info", error);
+      throw error;
+    }
+  }
+
+  async getInstrumentsInfo(params: GetInstrumentsInfoParamsV5) {
+    try {
+      const instrumentsInfo = await this.client.getInstrumentsInfo(params);
+      if (instrumentsInfo.retCode === 0 && instrumentsInfo.retMsg === "OK") {
+        return instrumentsInfo.result;
+      } else {
+        logger.error("Error getting instruments info", instrumentsInfo);
+      }
+    } catch (error: any) {
+      logger.error("Error getting instruments info", error);
       throw error;
     }
   }

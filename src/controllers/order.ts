@@ -10,91 +10,16 @@ import {
   OrderTypeV5,
 } from "bybit-api";
 
-// submitOrder controller function for the API
-export async function submitOrder(
-  req: Request,
-  res: Response,
-  orderParams: OrderParamsV5
-) {
-  try {
-    const { category, symbol, side, orderType, qty } = req.query;
-
-    if (!category || !symbol || !side || !orderType || !qty) {
-      return res.status(400).json({
-        message: "Missing required parameters",
-        success: false,
-      });
-    }
-
-    // Ensure accountType is of type AccountTypeV5
-    let validCategories: CategoryV5[] = ["spot", "linear", "inverse", "option"];
-
-    if (!validCategories.includes(category as CategoryV5)) {
-      return res.status(400).json({
-        message: "Invalid accountType",
-        success: false,
-      });
-    }
-
-    // add price if limit order
-    const params: OrderParamsV5 = {
-      category: category as CategoryV5,
-      symbol: symbol as string,
-      side: side as OrderSideV5,
-      orderType: orderType as OrderTypeV5,
-      qty: qty as string,
-    };
-
-    const order = await bybit.submitOrder(params);
-    logger.info("Order submitted successfully", order);
-
-    res.status(200).json({
-      message: "Order submitted successfully",
-      success: true,
-      data: order,
-    });
-  } catch (error: any) {
-    logger.error("Error submitting order", error);
-
-    res.status(500).json({
-      message: "Error submitting order",
-      success: false,
-      error: error.message,
-    });
-  }
-}
-
 // place order function for the bot
-export async function placeOrder(
-  category: CategoryV5,
-  symbol: string,
-  side: OrderSideV5,
-  orderType: OrderTypeV5,
-  qty: string
-  // isLeverage: 0 | 1,
-  // takeProfit: string,
-  // stopLoss: string
-) {
+export async function placeOrder(params: OrderParamsV5) {
   try {
-    // add price if limit order
-    const params: OrderParamsV5 = {
-      category: category as CategoryV5,
-      symbol: symbol,
-      side: side as OrderSideV5,
-      orderType: orderType as OrderTypeV5,
-      qty,
-      // isLeverage,
-      // takeProfit,
-      // stopLoss,
-    };
+    const orderResponse = await bybit.submitOrder(params);
 
-    const order = await bybit.submitOrder(params);
-    logger.info("Order submitted successfully", order);
-
+    // Return the result
     return {
       message: "Order submitted successfully",
       success: true,
-      data: order,
+      data: orderResponse,
     };
   } catch (error: any) {
     logger.error("Error submitting order", error);
@@ -111,7 +36,7 @@ export async function cancelOrder(req: Request, res: Response) {
   try {
     const { symbol } = req.query;
 
-    const category = "inverse";
+    const category = "linear";
 
     if (!symbol) {
       return res.status(400).json({
@@ -121,7 +46,7 @@ export async function cancelOrder(req: Request, res: Response) {
     }
 
     // Ensure accountType is of type AccountTypeV5
-    let validCategories: CategoryV5[] = ["spot", "linear", "inverse", "option"];
+    let validCategories: CategoryV5[] = ["spot", "linear", "linear", "option"];
 
     if (!validCategories.includes(category as CategoryV5)) {
       return res.status(400).json({
@@ -156,7 +81,7 @@ export async function cancelOrder(req: Request, res: Response) {
 
 export async function cancelAllOrders(req: Request, res: Response) {
   try {
-    const category = "inverse";
+    const category = "linear";
 
     if (!category) {
       return res.status(400).json({
@@ -166,7 +91,7 @@ export async function cancelAllOrders(req: Request, res: Response) {
     }
 
     // Ensure accountType is of type AccountTypeV5
-    let validCategories: CategoryV5[] = ["spot", "linear", "inverse", "option"];
+    let validCategories: CategoryV5[] = ["spot", "linear", "linear", "option"];
 
     if (!validCategories.includes(category as CategoryV5)) {
       return res.status(400).json({

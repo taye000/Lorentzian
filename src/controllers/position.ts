@@ -19,7 +19,7 @@ export async function getPositionInfo(req: Request, res: Response) {
     const validCategories: CategoryV5[] = [
       "spot",
       "linear",
-      "inverse",
+      "linear",
       "option",
     ];
 
@@ -43,7 +43,7 @@ export async function getPositionInfo(req: Request, res: Response) {
       data: positionInfo,
     });
   } catch (error: any) {
-    logger.error("Error getting position info", error);
+    logger.error("Error getting position info" + error);
 
     res.status(500).json({
       message: "Error getting position info",
