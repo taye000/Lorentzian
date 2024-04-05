@@ -5,8 +5,15 @@ import { formatMessage } from "../utils";
 import { placeOrder } from "./order";
 import { getWalletBalance } from "./walletBalance";
 import { configs } from "../configs";
-import { AccountTypeV5, OrderSideV5, OrderResultV5 } from "bybit-api";
+import {
+  AccountTypeV5,
+  OrderSideV5,
+  OrderResultV5,
+  OrderParamsV5,
+  CategoryV5,
+} from "bybit-api";
 import { getSymbolInfo } from "../common";
+import { getInstruments } from "./market";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
@@ -25,11 +32,20 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       formattedMessage = req.body.toString();
     }
 
+    const category = "linear" as CategoryV5;
+    let symbol = req.body.ticker as string;
+    const side: OrderSideV5 = req.body.action as OrderSideV5;
+    // logger.info("Side: " + side);
+
     // Send the message to Telegram
     sendMessage(formattedMessage);
 
-    const { minOrderSize, name } = await getSymbolInfo(req.body.ticker);
+    const { minOrderSize, name } = await getSymbolInfo(symbol);
+    let minOrder = minOrderSize.toString();
     logger.info("minOrderSize: " + minOrderSize + " name: " + name);
+
+    // const getInstrumentsinfo = await getInstruments(req.body.ticker);
+    // console.log("getInstrumentsinfo", getInstrumentsinfo?.list);
 
     let account_type: AccountTypeV5 = configs.accountType as AccountTypeV5;
 
@@ -69,42 +85,46 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
 
     const orderSize: number =
       parseFloat(availableToWithdraw) * orderSizePercentage;
-    logger.info("Order size: " + orderSize);
+    // logger.info("Order size: " + orderSize);
+
+    let leverage: number = parseFloat(configs.leverage);
+
+    const orderSizeWithLeverage: number = orderSize * leverage;
+    // logger.info("orderSizeWithLeverage: " + orderSizeWithLeverage);
 
     // Get the close price from the TradingView webhook
     const closePrice: number = req.body.close;
 
     // Calculate quantity
-    const qty: number = orderSize / closePrice;
-    logger.info("Quantity: " + qty);
+    // const qty: string = (orderSizeWithLeverage / closePrice).toFixed(3);
+    // logger.info("Quantity: " + qty);
 
-    const side: OrderSideV5 = req.body.action as OrderSideV5;
-    logger.info("Side: " + side);
+    const orderData: OrderParamsV5 = {
+      category: category,
+      symbol: symbol,
+      side: side,
+      orderType: "Market",
+      qty: minOrder,
+    };
 
     // Submit order for short position
-    const orderResponse = await placeOrder(
-      "inverse",
-      req.body.ticker,
-      side,
-      "Market",
-      qty.toString()
-    );
-    console.log("order response " + orderResponse);
+    const orderResponse = await placeOrder(orderData);
+    console.log("order response " + orderResponse.data);
 
     // Check the retCode in the response
-    if (orderResponse.data?.retCode === 0) {
+    if (orderResponse.success) {
       // Order placed successfully
-      const orderId = orderResponse.data?.result.orderId;
-      const message = `Order placed successfully. Order ID: ${orderId}`;
+      console.log("Order placed successfully", orderResponse.message);
+      // const orderId = orderResponse.data?.result.orderId;
+      const message = `Order placed successfully: ${orderResponse.data}`;
       formattedMessage = await formatMessage(message);
       sendMessage(formattedMessage);
-      logger.info(formattedMessage);
     } else {
       // Failed to place order
-      const errorMessage = `Failed to place order. Error: ${orderResponse.error}`;
+      console.log("Failed to place order", orderResponse.message);
+      const errorMessage = `Failed to place order. Error: ${orderResponse.message}`;
       formattedMessage = await formatMessage(errorMessage);
       sendMessage(formattedMessage);
-      logger.error(formattedMessage);
     }
 
     res.status(200).json({
@@ -124,8 +144,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
   }
 };
 
-
-
 //TODO 1: https://bybit-exchange.github.io/docs/v5/account/fee-rate
 //TODO 2: https://bybit-exchange.github.io/docs/v5/asset/coin-info
 //TODO 3: https://bybit-exchange.github.io/docs/v5/order/amend-order
+//TODO 4: https://bybit-exchange.github.io/docs/v5/position/leverage

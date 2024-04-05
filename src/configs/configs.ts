@@ -11,6 +11,7 @@ const apiSecret = process.env.API_SECRET;
 const buyPercentage = process.env.BUY_PERCENTAGE;
 const accountType = process.env.ACCOUNT_TYPE;
 const coin = process.env.COIN;
+const leverage = process.env.LEVERAGE;
 
 if (!botToken) {
   logger.error("Error: BOT_TOKEN environment variable is missing.");
@@ -47,6 +48,11 @@ if (!coin) {
   process.exit(1);
 }
 
+if (!leverage) {
+  logger.error("Error: LEVERAGE environment variable is missing.");
+  process.exit(1);
+}
+
 const parsedPort = parseInt(port || "", 10);
 if (isNaN(parsedPort) || parsedPort <= 0) {
   logger.error("Error: Invalid PORT environment variable.");
@@ -60,6 +66,7 @@ export const configs = {
   buyPercentage: parseFloat(buyPercentage || "0.1"),
   accountType,
   coin,
+  leverage,
   bybit: {
     apiKey,
     apiSecret,
