@@ -34,8 +34,11 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
 
     const category = "linear" as CategoryV5;
     let symbol = req.body.ticker as string;
+    const closePrice: number = req.body.close;
     const side: OrderSideV5 = req.body.action as OrderSideV5;
-    // logger.info("Side: " + side);
+
+    const orderSizePercentage: number = configs.buyPercentage;
+    let leverage: number = parseFloat(configs.leverage);
 
     // Send the message to Telegram
     sendMessage(formattedMessage);
@@ -80,32 +83,42 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       unrealisedPnl,
     });
 
-    // Calculate order size
-    const orderSizePercentage: number = configs.buyPercentage;
-
     const orderSize: number =
       parseFloat(availableToWithdraw) * orderSizePercentage;
     // logger.info("Order size: " + orderSize);
 
-    let leverage: number = parseFloat(configs.leverage);
-
     const orderSizeWithLeverage: number = orderSize * leverage;
     // logger.info("orderSizeWithLeverage: " + orderSizeWithLeverage);
 
-    // Get the close price from the TradingView webhook
-    const closePrice: number = req.body.close;
-
     // Calculate quantity
-    // const qty: string = (orderSizeWithLeverage / closePrice).toFixed(3);
+    const quantityAllowed: number = orderSizeWithLeverage / closePrice;
     // logger.info("Quantity: " + qty);
+
+    let coinDecimalPlaces;
+    if (symbol === "BTCUSDT") {
+      coinDecimalPlaces = 3;
+    } else if (symbol === "ETHUSDT") {
+      coinDecimalPlaces = 2;
+    }
+    console.log({ coinDecimalPlaces });
+
+    let qty: string;
+    if (quantityAllowed < minOrder) {
+      qty = minOrder.toString();
+    } else {
+      qty = quantityAllowed.toFixed(coinDecimalPlaces);
+    }
+    console.log({ qty });
 
     const orderData: OrderParamsV5 = {
       category: category,
       symbol: symbol,
       side: side,
       orderType: "Market",
-      qty: minOrder,
+      qty: qty,
     };
+
+    console.log({ orderData });
 
     // Submit order for short position
     const orderResponse = await placeOrder(orderData);
