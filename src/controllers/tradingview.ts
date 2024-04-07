@@ -82,9 +82,15 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     console.log({ orderResponse });
 
     if (orderResponse.success) {
-      // Order placed successfully
-      console.log("Order placed successfully", orderResponse.data);
-      if (orderResponse.success) {
+      // Order submitted successfully
+      console.log("Order submitted successfully", orderResponse.data);
+
+      if ("retCode" in orderResponse && orderResponse.retCode === 110007) {
+        // Handle insufficient funds error
+        const errorMessage = "Insufficient funds to place order";
+        formattedMessage = await formatMessage(errorMessage);
+        sendMessage(formattedMessage);
+      } else {
         // Order placed successfully
         console.log("Order placed successfully", orderResponse.data);
 
@@ -108,11 +114,17 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
           sendMessage(formattedMessage);
         } else {
           // Handle unexpected response format
-          const errorMessage = `Unexpected response format from order placement.`;
+          const errorMessage = orderResponse.message;
           formattedMessage = await formatMessage(errorMessage);
           sendMessage(formattedMessage);
         }
       }
+    } else {
+      // Failed to submit order
+      console.log("Failed to submit order", orderResponse.message);
+      const errorMessage = `Failed to submit order. Error: ${orderResponse.message}`;
+      formattedMessage = await formatMessage(errorMessage);
+      sendMessage(formattedMessage);
     }
 
     res.status(200).json({

@@ -1,26 +1,33 @@
 import { Request, Response } from "express";
 import logger from "../utils/logger";
 import { bybit } from "../bot";
-import {
-  CancelOrderParamsV5,
-  CategoryV5,
-  OrderParamsV5,
-} from "bybit-api";
+import { CancelOrderParamsV5, CategoryV5, OrderParamsV5 } from "bybit-api";
 
 // place order function for the bot
 export async function placeOrder(params: OrderParamsV5) {
   try {
     const orderResponse = await bybit.submitOrder(params);
 
-    // Return the result
-    return {
-      message: "Order submitted successfully",
-      success: true,
-      data: orderResponse,
-    };
+    // Check if the order was successfully placed
+    if (orderResponse.retCode === 0) {
+      // Return success response
+      return {
+        message: "Order placed successfully",
+        success: true,
+        data: orderResponse,
+      };
+    } else {
+      // Return failure response
+      return {
+        message: "Failed to place order",
+        success: false,
+        error: orderResponse.retMsg,
+      };
+    }
   } catch (error: any) {
     logger.error("Error submitting order", error);
 
+    // Return failure response for any errors during order submission
     return {
       message: "Error submitting order",
       success: false,
