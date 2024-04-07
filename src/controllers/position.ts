@@ -1,54 +1,39 @@
-import { Request, Response } from "express";
 import logger from "../utils/logger";
 import { bybit } from "../bot";
 import { CategoryV5, PositionInfoParamsV5 } from "bybit-api";
 
-export async function getPositionInfo(req: Request, res: Response) {
+export async function getSize(symbol: string): Promise<number> {
   try {
-    const { category } = req.query;
-    logger.info("categoryy " + category);
-
-    if (!category) {
-      return res.status(400).json({
-        message: "Missing required parameters",
-        success: false,
-      });
+    if (!symbol) {
+      throw new Error("Missing required parameters");
     }
-
-    // Ensure category is of type CategoryV5
-    const validCategories: CategoryV5[] = [
-      "spot",
-      "linear",
-      "linear",
-      "option",
-    ];
-
-    if (!validCategories.includes(category as CategoryV5)) {
-      return res.status(400).json({
-        message: "Invalid category",
-        success: false,
-      });
-    }
+    const category = "linear" as CategoryV5;
 
     const params: PositionInfoParamsV5 = {
-      category: category as CategoryV5,
+      category,
+      symbol,
     };
 
     const positionInfo = await bybit.getPositionInfo(params);
-    logger.info("Position info retrieved successfully", positionInfo);
 
-    res.status(200).json({
-      message: "Position info retrieved successfully",
-      success: true,
-      data: positionInfo,
-    });
+    const positions = positionInfo?.list;
+
+    let totalSize = 0;
+
+    // Calculate the total size of positions
+    if (positions && positions.length > 0) {
+      for (const position of positions) {
+        const size = parseFloat(position.size);
+        if (!isNaN(size)) {
+          totalSize += size;
+        }
+      }
+    }
+
+    return totalSize;
   } catch (error: any) {
-    logger.error("Error getting position info" + error);
+    logger.error("Error getting position info", error);
 
-    res.status(500).json({
-      message: "Error getting position info",
-      success: false,
-      error: error.message,
-    });
+    throw new Error("Error getting position info: " + error.message);
   }
 }

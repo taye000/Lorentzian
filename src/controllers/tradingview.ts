@@ -8,11 +8,11 @@ import { configs } from "../configs";
 import {
   AccountTypeV5,
   OrderSideV5,
-  OrderResultV5,
   OrderParamsV5,
   CategoryV5,
 } from "bybit-api";
 import { calculateTPSL, countDecimalPlaces, getSymbolInfo } from "../common";
+import { getSize } from "./position";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
@@ -46,62 +46,22 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     sendMessage(formattedMessage);
 
     const { minOrderSize, name } = await getSymbolInfo(symbol);
-    let minOrder = minOrderSize.toString();
-    logger.info("minOrderSize: " + minOrderSize + " name: " + name);
+    let minOrder: number = minOrderSize;
 
     let coinDecimalPlaces = countDecimalPlaces(minOrderSize);
     console.log({ coinDecimalPlaces });
 
-    let account_type: AccountTypeV5 = configs.accountType as AccountTypeV5;
-
-    // Retrieve wallet balance
-    const { data, success, error } = await getWalletBalance(account_type);
-    if (data === undefined) {
-      throw new Error("Failed to retrieve account balance.");
-    }
-
-    // Destructure only the fields with values
-    const {
-      accountType,
-      coin: [
-        {
-          coin,
-          availableToWithdraw,
-          equity,
-          walletBalance,
-          cumRealisedPnl,
-          unrealisedPnl,
-        },
-      ],
-    } = data;
-
-    logger.info("Wallet balance:", {
-      accountType,
-      coin,
-      availableToWithdraw,
-      equity,
-      walletBalance,
-      cumRealisedPnl,
-      unrealisedPnl,
-    });
-
-    const orderSize: number = parseFloat(equity) * orderSizePercentage;
-    // logger.info("Order size: " + orderSize);
-
-    const orderSizeWithLeverage: number = orderSize * leverage;
-    // logger.info("orderSizeWithLeverage: " + orderSizeWithLeverage);
-
-    // Calculate quantity
-    const quantityAllowed: number = orderSizeWithLeverage / closePrice;
-    // logger.info("Quantity: " + qty);
+    //check current position size for the symbol
+    const size: number | undefined = await getSize(symbol);
+    console.log({ size });
 
     let qty: string;
-    if (quantityAllowed < minOrder) {
+    if (size === undefined || isNaN(size) || size < minOrder) {
       qty = minOrder.toString();
     } else {
-      qty = quantityAllowed.toFixed(coinDecimalPlaces);
+      qty = Math.max(size * 2, minOrder).toFixed(coinDecimalPlaces);
     }
-    console.log({ quantityAllowed });
+
     console.log({ minOrder });
     console.log({ qty });
 
@@ -119,22 +79,40 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
 
     // Submit order for short position
     const orderResponse = await placeOrder(orderData);
-    console.log({orderResponse});
+    console.log({ orderResponse });
 
-    // Check the retCode in the response
     if (orderResponse.success) {
       // Order placed successfully
       console.log("Order placed successfully", orderResponse.data);
-      // const orderId = orderResponse.data?.result.orderId;
-      const message = `Order placed successfully: ${orderResponse.data}`;
-      formattedMessage = await formatMessage(message);
-      sendMessage(formattedMessage);
-    } else {
-      // Failed to place order
-      console.log("Failed to place order", orderResponse.message);
-      const errorMessage = `Failed to place order. Error: ${orderResponse.message}`;
-      formattedMessage = await formatMessage(errorMessage);
-      sendMessage(formattedMessage);
+      if (orderResponse.success) {
+        // Order placed successfully
+        console.log("Order placed successfully", orderResponse.data);
+
+        // Check if orderResponse.data exists and has the expected properties
+        if (
+          orderResponse.data &&
+          "id" in orderResponse.data &&
+          "market" in orderResponse.data &&
+          "side" in orderResponse.data &&
+          "type" in orderResponse.data &&
+          "quantity" in orderResponse.data
+        ) {
+          const { id, market, side, type, quantity } = orderResponse.data;
+          const message = `Order placed successfully:
+            ID: ${id}
+            Market: ${market}
+            Side: ${side}
+            Type: ${type}
+            Quantity: ${quantity}`;
+          formattedMessage = await formatMessage(message);
+          sendMessage(formattedMessage);
+        } else {
+          // Handle unexpected response format
+          const errorMessage = `Unexpected response format from order placement.`;
+          formattedMessage = await formatMessage(errorMessage);
+          sendMessage(formattedMessage);
+        }
+      }
     }
 
     res.status(200).json({
@@ -158,3 +136,5 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
 //TODO 2: https://bybit-exchange.github.io/docs/v5/asset/coin-info
 //TODO 3: https://bybit-exchange.github.io/docs/v5/order/amend-order
 //TODO 4: https://bybit-exchange.github.io/docs/v5/position/leverage
+
+//TODO: use close or open price to make limit orders instead of market
