@@ -87,8 +87,9 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       sendMessage(formattedMessage);
 
       // Order submitted successfully
-      console.log("Order not placed successfully", orderResponse.message);
+      console.log(orderResponse.message);
     } else {
+      console.log(orderResponse.message);
       const errorMessage = orderResponse.message;
       formattedMessage = await formatMessage(errorMessage);
       sendMessage(formattedMessage);
