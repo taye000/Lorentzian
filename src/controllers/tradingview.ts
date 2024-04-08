@@ -3,16 +3,10 @@ import { sendMessage } from "../bot";
 import logger from "../utils/logger";
 import { formatMessage } from "../utils";
 import { placeOrder } from "./order";
-import { getWalletBalance } from "./walletBalance";
-import { configs } from "../configs";
-import {
-  AccountTypeV5,
-  OrderSideV5,
-  OrderParamsV5,
-  CategoryV5,
-} from "bybit-api";
+import { OrderSideV5, OrderParamsV5, CategoryV5 } from "bybit-api";
 import { calculateTPSL, countDecimalPlaces, getSymbolInfo } from "../common";
 import { getSize } from "./position";
+import { configs } from "../configs";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
@@ -81,48 +75,21 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     const orderResponse = await placeOrder(orderData);
     console.log({ orderResponse });
 
-    if (orderResponse.success) {
+    if (orderResponse.success && orderResponse.data) {
+      const { id, market, side, type, quantity } = orderResponse.data;
+      const message = `Order placed successfully:
+        ID: ${id}
+        Market: ${market}
+        Side: ${side}
+        Type: ${type}
+        Quantity: ${quantity}`;
+      formattedMessage = await formatMessage(message);
+      sendMessage(formattedMessage);
+
       // Order submitted successfully
-      console.log("Order submitted successfully", orderResponse.data);
-
-      if ("retCode" in orderResponse && orderResponse.retCode === 110007) {
-        // Handle insufficient funds error
-        const errorMessage = "Insufficient funds to place order";
-        formattedMessage = await formatMessage(errorMessage);
-        sendMessage(formattedMessage);
-      } else {
-        // Order placed successfully
-        console.log("Order placed successfully", orderResponse.data);
-
-        // Check if orderResponse.data exists and has the expected properties
-        if (
-          orderResponse.data &&
-          "id" in orderResponse.data &&
-          "market" in orderResponse.data &&
-          "side" in orderResponse.data &&
-          "type" in orderResponse.data &&
-          "quantity" in orderResponse.data
-        ) {
-          const { id, market, side, type, quantity } = orderResponse.data;
-          const message = `Order placed successfully:
-            ID: ${id}
-            Market: ${market}
-            Side: ${side}
-            Type: ${type}
-            Quantity: ${quantity}`;
-          formattedMessage = await formatMessage(message);
-          sendMessage(formattedMessage);
-        } else {
-          // Handle unexpected response format
-          const errorMessage = orderResponse.message;
-          formattedMessage = await formatMessage(errorMessage);
-          sendMessage(formattedMessage);
-        }
-      }
+      console.log("Order not placed successfully", orderResponse.message);
     } else {
-      // Failed to submit order
-      console.log("Failed to submit order", orderResponse.message);
-      const errorMessage = `Failed to submit order. Error: ${orderResponse.message}`;
+      const errorMessage = orderResponse.message;
       formattedMessage = await formatMessage(errorMessage);
       sendMessage(formattedMessage);
     }

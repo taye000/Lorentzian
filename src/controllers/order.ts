@@ -6,22 +6,21 @@ import { CancelOrderParamsV5, CategoryV5, OrderParamsV5 } from "bybit-api";
 // place order function for the bot
 export async function placeOrder(params: OrderParamsV5) {
   try {
-    const orderResponse = await bybit.submitOrder(params);
-
+    const orderPlaced: any = await bybit.submitOrder(params);
     // Check if the order was successfully placed
-    if (orderResponse.retCode === 0) {
+    if (orderPlaced) {
       // Return success response
       return {
-        message: "Order placed successfully",
+        message: "Order submitted successfully",
         success: true,
-        data: orderResponse,
+        data: orderPlaced,
       };
     } else {
       // Return failure response
       return {
         message: "Failed to place order",
         success: false,
-        error: orderResponse.retMsg,
+        data: orderPlaced,
       };
     }
   } catch (error: any) {
