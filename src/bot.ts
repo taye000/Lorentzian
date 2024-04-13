@@ -112,6 +112,9 @@ bot.command("bal", async (ctx: Context) => {
     // Fetch the wallet balance using the provided parameters
     const bal = await bybit.getWalletBalance(params);
     const walletBalance = bal?.coin;
+    
+    const equity = bal?.coin[0].equity;
+    console.log({equity});
 
     // Check if wallet balance data is empty or null
     if (!walletBalance) {

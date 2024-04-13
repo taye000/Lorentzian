@@ -3,10 +3,16 @@ import { sendMessage } from "../bot";
 import logger from "../utils/logger";
 import { formatMessage } from "../utils";
 import { placeOrder } from "./order";
-import { OrderSideV5, OrderParamsV5, CategoryV5 } from "bybit-api";
+import {
+  OrderSideV5,
+  OrderParamsV5,
+  CategoryV5,
+  AccountTypeV5,
+} from "bybit-api";
 import { calculateTPSL, countDecimalPlaces, getSymbolInfo } from "../common";
 import { getSize } from "./position";
 import { configs } from "../configs";
+import { getWalletBalance } from "./walletBalance";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
@@ -45,15 +51,26 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     let coinDecimalPlaces = countDecimalPlaces(minOrderSize);
     console.log({ coinDecimalPlaces });
 
-    //check current position size for the symbol
-    const size: number | undefined = await getSize(symbol);
-    console.log({ size });
+    const accountType = "contract" as AccountTypeV5;
+    let qty: string; // Declare qty variable without assigning a default value
 
-    let qty: string;
-    if (size === undefined || isNaN(size) || size < minOrder) {
-      qty = minOrder.toString();
+    const equity: number | null = await getWalletBalance(accountType);
+    if (equity) {
+      console.log({ equity });
+      const orderSize = equity * orderSizePercentage * leverage;
+      console.log({ orderSize });
+
+      // Check if orderSize is less than minOrder
+      if (orderSize < minOrder) {
+        // Set qty to minOrder * leverage
+        qty = (minOrder * leverage).toFixed(coinDecimalPlaces);
+      } else {
+        // Otherwise, set qty to orderSize rounded to coinDecimalPlaces
+        qty = orderSize.toFixed(coinDecimalPlaces);
+      }
     } else {
-      qty = Math.max(size * 2, minOrder).toFixed(coinDecimalPlaces);
+      // If equity is null, set qty to minOrder
+      qty = minOrder.toFixed(coinDecimalPlaces);
     }
 
     console.log({ minOrder });
@@ -111,10 +128,3 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     });
   }
 };
-
-//TODO 1: https://bybit-exchange.github.io/docs/v5/account/fee-rate
-//TODO 2: https://bybit-exchange.github.io/docs/v5/asset/coin-info
-//TODO 3: https://bybit-exchange.github.io/docs/v5/order/amend-order
-//TODO 4: https://bybit-exchange.github.io/docs/v5/position/leverage
-
-//TODO: use close or open price to make limit orders instead of market
