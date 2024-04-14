@@ -8,17 +8,17 @@ export async function placeOrder(params: OrderParamsV5) {
   try {
     const orderPlaced: any = await bybit.submitOrder(params);
     // Check if the order was successfully placed
-    if (orderPlaced) {
+    if (orderPlaced.retcode === 0) {
       // Return success response
       return {
-        message: "Order submitted successfully",
+        message: orderPlaced.retMsg,
         success: true,
         data: orderPlaced,
       };
     } else {
       // Return failure response
       return {
-        message: "Failed to place order",
+        message: orderPlaced.retMsg,
         success: false,
         data: orderPlaced,
       };

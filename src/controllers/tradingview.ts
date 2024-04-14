@@ -57,7 +57,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     const equity: number | null = await getWalletBalance(accountType);
     if (equity) {
       console.log({ equity });
-      const orderSize = equity * orderSizePercentage * leverage;
+      const orderSize = (equity * orderSizePercentage * leverage) / closePrice;
       console.log({ orderSize });
 
       // Check if orderSize is less than minOrder
@@ -90,9 +90,8 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
 
     // Submit order for short position
     const orderResponse = await placeOrder(orderData);
-    console.log({ orderResponse });
 
-    if (orderResponse.success && orderResponse.data) {
+    if (orderResponse.success) {
       const { id, market, side, type, quantity } = orderResponse.data;
       const message = `Order placed successfully:
         ID: ${id}
@@ -102,11 +101,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
         Quantity: ${quantity}`;
       formattedMessage = await formatMessage(message);
       sendMessage(formattedMessage);
-
-      // Order submitted successfully
-      console.log(orderResponse.message);
     } else {
-      console.log(orderResponse.message);
       const errorMessage = orderResponse.message;
       formattedMessage = await formatMessage(errorMessage);
       sendMessage(formattedMessage);
