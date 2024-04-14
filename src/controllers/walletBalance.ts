@@ -18,18 +18,12 @@ export async function getWalletBalance(accountType: AccountTypeV5) {
       params
     )) as WalletBalanceV5;
 
-    return {
-      message: "Wallet balance fetched successfully",
-      success: true,
-      data: walletBalance,
-    };
+    const equity:number = parseFloat(walletBalance?.coin[0]?.equity);
+
+    return equity;
   } catch (error: any) {
     logger.error("Error fetching wallet balance", error);
 
-    return {
-      message: "Error fetching wallet balance",
-      success: false,
-      error: error.message,
-    };
+    return null;
   }
 }
