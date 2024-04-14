@@ -49,8 +49,6 @@ const sendMessage = async (message: any) => {
       parse_mode: "MarkdownV2",
     });
 
-    // Log successful message sending
-    logger.info("Message sent successfully", { message: message });
   } catch (error) {
     // Log any errors that occur during message sending
     logger.error("Error sending message", error);
@@ -114,7 +112,6 @@ bot.command("bal", async (ctx: Context) => {
     const walletBalance = bal?.coin;
     
     const equity = bal?.coin[0].equity;
-    console.log({equity});
 
     // Check if wallet balance data is empty or null
     if (!walletBalance) {
@@ -311,7 +308,6 @@ bot.command("position", async (ctx: Context) => {
       await ctx.reply("Empty position info data");
       throw new Error("Empty position info data");
     } else {
-      console.log({ positionInfo });
 
       // Format and summarize the position info
       // You can customize this based on the response structure

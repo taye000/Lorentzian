@@ -10,7 +10,6 @@ export const routes = (app: Application) => {
   app.get("/", (req: Request, res: Response) => {
     try {
       res.send("Lorentzian Bot 🚀🚀🚀");
-      logger.info("Welcome message sent successfully");
     } catch (error) {
       logger.error("Error sending welcome message", error);
       res.status(500).send("Internal Server Error");

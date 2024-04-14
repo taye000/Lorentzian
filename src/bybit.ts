@@ -66,7 +66,6 @@ export class BybitWrapper {
       if (order.retCode !== 0) {
         logger.error("Error cancelling order", order);
       }
-      logger.info(order);
       return order;
     } catch (error: any) {
       logger.error("Error cancelling order", error);
@@ -80,7 +79,6 @@ export class BybitWrapper {
       if (orders.retCode !== 0) {
         logger.error("Error cancelling all orders", orders);
       }
-      logger.info(orders);
       return orders;
     } catch (error: any) {
       logger.error("Error cancelling all orders", error);

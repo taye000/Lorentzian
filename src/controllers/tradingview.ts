@@ -40,7 +40,6 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     let leverage: number = parseFloat(configs.leverage);
 
     const { takeProfit, stopLoss } = calculateTPSL(closePrice, side);
-    console.log(`Take Profit: ${takeProfit}, Stop Loss: ${stopLoss}`);
 
     // Send the message to Telegram
     sendMessage(formattedMessage);
@@ -49,16 +48,15 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     let minOrder: number = minOrderSize;
 
     let coinDecimalPlaces = countDecimalPlaces(minOrderSize);
-    console.log({ coinDecimalPlaces });
 
     const accountType = "contract" as AccountTypeV5;
     let qty: string; // Declare qty variable without assigning a default value
 
     const equity: number | null = await getWalletBalance(accountType);
     if (equity) {
-      console.log({ equity });
-      const orderSize = (equity * orderSizePercentage * leverage) / closePrice;
-      console.log({ orderSize });
+      const equityAmount = equity * orderSizePercentage;
+      const orderSize = equityAmount / closePrice;
+      const orderSizeWithLeverage = orderSize * leverage;
 
       // Check if orderSize is less than minOrder
       if (orderSize < minOrder) {
@@ -73,9 +71,6 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       qty = minOrder.toFixed(coinDecimalPlaces);
     }
 
-    console.log({ minOrder });
-    console.log({ qty });
-
     const orderData: OrderParamsV5 = {
       category: category,
       symbol: symbol,
@@ -85,8 +80,6 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       stopLoss: stopLoss,
       takeProfit: takeProfit,
     };
-
-    console.log({ orderData });
 
     // Submit order for short position
     const orderResponse = await placeOrder(orderData);

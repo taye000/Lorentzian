@@ -64,7 +64,6 @@ export async function cancelOrder(req: Request, res: Response) {
     };
 
     const cancellationResult = await bybit.cancelOrder(params);
-    logger.info("Order cancelled successfully", cancellationResult);
 
     res.status(200).json({
       message: "Order cancelled successfully",
