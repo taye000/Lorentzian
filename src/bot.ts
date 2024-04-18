@@ -170,7 +170,7 @@ bot.command("order", async (ctx: Context) => {
     }
 
     await ctx.reply(
-      `Order submitted successfully. Order ID: ${order.id}, Order Link ID: ${order.orderLinkId}`
+      `Order submitted successfully. Order ID: ${order.id}`
     );
   } catch (error: any) {
     ctx.reply("Error submitting order, try again.", error);
