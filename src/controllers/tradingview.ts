@@ -8,6 +8,7 @@ import {
   OrderParamsV5,
   CategoryV5,
   AccountTypeV5,
+  PositionV5,
 } from "bybit-api";
 import { calculateTPSL, countDecimalPlaces, getSymbolInfo } from "../common";
 import { configs } from "../configs";
@@ -45,11 +46,11 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     const closePrice: number = req.body.close;
     const side: OrderSideV5 = req.body.action as OrderSideV5;
 
-    const position = await getSize(symbol);
+    const { side: tradeSide, size } = (await getSize(symbol)) as PositionV5;
 
     let positionQty: string | undefined = undefined;
-    if (position && position.side !== side && parseFloat(position.size) > 0) {
-      positionQty = (parseFloat(position.size) * 2).toString();
+    if (tradeSide !== side && parseFloat(size) > 0) {
+      positionQty = (parseFloat(size) * 2).toString();
     }
 
     const orderSizePercentage: number = configs.buyPercentage;
@@ -101,23 +102,16 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     };
 
     const orderResponse = await placeOrder(orderData);
-    console.log({ orderResponse });
 
     if (orderResponse.success) {
       const { retMsg, id, market, side, quantity } = orderResponse.data;
-      const msg = `Order placed successfully:
-        Message: ${retMsg}
-        OrderID: ${id}
-        Market: ${market}
-        Side: ${side}
-        Quantity: ${quantity}`;
-      console.log({ msg });
+      const msg = `${retMsg} Order ${id} placed successfully at ${market} ${side} price for qty ${quantity}`;
+
       formattedMessage = await formatMessage(msg);
-      console.log({ formattedMessage });
+
       await sendMessage(formattedMessage);
     } else {
       formattedMessage = await formatMessage(orderResponse.message);
-      console.log({ formattedMessage });
       await sendMessage(formattedMessage);
     }
 
