@@ -7,18 +7,41 @@ import { CancelOrderParamsV5, CategoryV5, OrderParamsV5 } from "bybit-api";
 export async function placeOrder(params: OrderParamsV5) {
   try {
     const orderPlaced: any = await bybit.submitOrder(params);
-    // Check if the order was successfully placed
+    console.log(orderPlaced);
     if (orderPlaced.retcode === 0) {
-      // Return success response
       return {
         message: orderPlaced.retMsg,
         success: true,
         data: orderPlaced,
       };
-    } else {
-      // Return failure response
+    }
+    if (orderPlaced.retcode === 10001) {
       return {
-        message: orderPlaced.retMsg,
+        message: "Request parameter error.",
+        success: false,
+        data: orderPlaced,
+      };
+    }
+    if (orderPlaced.retcode === 130021) {
+      return {
+        message:
+          "Error placing order: Insufficient balance. Please check your available funds.",
+        success: true,
+        data: orderPlaced,
+      };
+    }
+    if (orderPlaced.retcode === 130070) {
+      return {
+        message:
+          "Error placing order: Invalid order price. Please check the current market price and retry.",
+        success: false,
+        data: orderPlaced,
+      };
+    } else {
+      return {
+        message:
+          orderPlaced.retMsg ||
+          "Error placing order, please check your order parameters and try again.",
         success: false,
         data: orderPlaced,
       };
@@ -26,7 +49,6 @@ export async function placeOrder(params: OrderParamsV5) {
   } catch (error: any) {
     logger.error("Error submitting order", error);
 
-    // Return failure response for any errors during order submission
     return {
       message: "Error submitting order",
       success: false,
@@ -48,7 +70,6 @@ export async function cancelOrder(req: Request, res: Response) {
       });
     }
 
-    // Ensure accountType is of type AccountTypeV5
     let validCategories: CategoryV5[] = ["spot", "linear", "linear", "option"];
 
     if (!validCategories.includes(category as CategoryV5)) {

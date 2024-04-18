@@ -41,17 +41,18 @@ export class BybitWrapper {
       const { retCode, retMsg, result } = await this.client.submitOrder(params);
       if (retCode === 0 && result) {
         return {
+          retCode,
+          retMsg,
           id: result.orderId,
-          orderLinkId: result.orderLinkId,
           market: params.symbol,
           side: params.side,
-          type: params.orderType,
           quantity: Number(params.qty),
         };
       } else {
         return {
           retCode,
           retMsg,
+          result,
         };
       }
     } catch (error: any) {
