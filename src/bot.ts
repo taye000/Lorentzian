@@ -13,12 +13,12 @@ import {
   CancelAllOrdersParamsV5,
   CancelOrderParamsV5,
   CategoryV5,
-  GetWalletBalanceParamsV5,
   OrderParamsV5,
   OrderSideV5,
   OrderTypeV5,
   PositionInfoParamsV5,
 } from "bybit-api";
+import { GetWalletBalanceParamsV5 } from "./@types/bybit-types";
 
 const bot = new Telegraf(configs.bot_token!);
 export const bybit = new BybitWrapper(
@@ -48,9 +48,6 @@ const sendMessage = async (message: any) => {
     await bot.telegram.sendMessage(configs.chat_id!, message, {
       parse_mode: "MarkdownV2",
     });
-
-    // Log successful message sending
-    logger.info("Message sent successfully", { message: message });
   } catch (error) {
     // Log any errors that occur during message sending
     logger.error("Error sending message", error);
@@ -107,14 +104,14 @@ bot.command("bal", async (ctx: Context) => {
     const params: GetWalletBalanceParamsV5 = {
       accountType,
       coin,
+      timestamp: Date.now(),
     };
 
     // Fetch the wallet balance using the provided parameters
     const bal = await bybit.getWalletBalance(params);
     const walletBalance = bal?.coin;
-    
+
     const equity = bal?.coin[0].equity;
-    console.log({equity});
 
     // Check if wallet balance data is empty or null
     if (!walletBalance) {
@@ -311,8 +308,6 @@ bot.command("position", async (ctx: Context) => {
       await ctx.reply("Empty position info data");
       throw new Error("Empty position info data");
     } else {
-      console.log({ positionInfo });
-
       // Format and summarize the position info
       // You can customize this based on the response structure
       const summaryMessage = formatPositionInfo(positionInfo);

@@ -10,12 +10,19 @@ import {
   AccountTypeV5,
 } from "bybit-api";
 import { calculateTPSL, countDecimalPlaces, getSymbolInfo } from "../common";
-import { getSize } from "./position";
 import { configs } from "../configs";
 import { getWalletBalance } from "./walletBalance";
+import { getSize } from "./position";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
+    if (!req.body) {
+      res.status(400).json({
+        message: "Invalid request body",
+        success: false,
+      });
+      return;
+    }
     // Parse the body based on the Content-Type header
     let formattedMessage: string;
     if (req.is("json")) {
@@ -30,51 +37,58 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       // Otherwise, use the body as is
       formattedMessage = req.body.toString();
     }
+    // Send the message to Telegram
+    await sendMessage(formattedMessage);
 
     const category = "linear" as CategoryV5;
     let symbol = req.body.ticker as string;
     const closePrice: number = req.body.close;
     const side: OrderSideV5 = req.body.action as OrderSideV5;
 
+    const position = await getSize(symbol);
+
+    let positionQty: string | undefined = undefined;
+    if (position && position.side !== side && parseFloat(position.size) > 0) {
+      positionQty = (parseFloat(position.size) * 2).toString();
+    }
+
     const orderSizePercentage: number = configs.buyPercentage;
     let leverage: number = parseFloat(configs.leverage);
 
     const { takeProfit, stopLoss } = calculateTPSL(closePrice, side);
-    console.log(`Take Profit: ${takeProfit}, Stop Loss: ${stopLoss}`);
-
-    // Send the message to Telegram
-    sendMessage(formattedMessage);
 
     const { minOrderSize, name } = await getSymbolInfo(symbol);
     let minOrder: number = minOrderSize;
 
     let coinDecimalPlaces = countDecimalPlaces(minOrderSize);
-    console.log({ coinDecimalPlaces });
 
     const accountType = "contract" as AccountTypeV5;
-    let qty: string; // Declare qty variable without assigning a default value
+
+    let qty: string;
 
     const equity: number | null = await getWalletBalance(accountType);
-    if (equity) {
-      console.log({ equity });
-      const orderSize = (equity * orderSizePercentage * leverage) / closePrice;
-      console.log({ orderSize });
+
+    if (equity !== null) {
+      const equityAmount = equity * orderSizePercentage;
+      const orderSize = equityAmount / closePrice;
+      const orderSizeWithLeverage = orderSize * leverage;
 
       // Check if orderSize is less than minOrder
-      if (orderSize < minOrder) {
+      if (orderSizeWithLeverage < minOrder) {
         // Set qty to minOrder * leverage
         qty = (minOrder * leverage).toFixed(coinDecimalPlaces);
       } else {
         // Otherwise, set qty to orderSize rounded to coinDecimalPlaces
-        qty = orderSize.toFixed(coinDecimalPlaces);
+        qty = orderSizeWithLeverage.toFixed(coinDecimalPlaces);
       }
     } else {
       // If equity is null, set qty to minOrder
       qty = minOrder.toFixed(coinDecimalPlaces);
     }
 
-    console.log({ minOrder });
-    console.log({ qty });
+    if (positionQty) {
+      qty = positionQty;
+    }
 
     const orderData: OrderParamsV5 = {
       category: category,
@@ -86,25 +100,25 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       takeProfit: takeProfit,
     };
 
-    console.log({ orderData });
-
     // Submit order for short position
     const orderResponse = await placeOrder(orderData);
+    console.log({ orderResponse });
 
     if (orderResponse.success) {
-      const { id, market, side, type, quantity } = orderResponse.data;
-      const message = `Order placed successfully:
-        ID: ${id}
+      const { retMsg, id, market, side, quantity } = orderResponse.data;
+      const msg = `Order placed successfully:
+        Message: ${retMsg}
+        OrderID: ${id}
         Market: ${market}
         Side: ${side}
-        Type: ${type}
         Quantity: ${quantity}`;
-      formattedMessage = await formatMessage(message);
-      sendMessage(formattedMessage);
+      formattedMessage = await formatMessage(msg);
+      console.log({ formattedMessage });
+      await sendMessage(formattedMessage);
     } else {
-      const errorMessage = orderResponse.message;
-      formattedMessage = await formatMessage(errorMessage);
-      sendMessage(formattedMessage);
+      formattedMessage = await formatMessage(orderResponse.message);
+      console.log({ formattedMessage });
+      await sendMessage(formattedMessage);
     }
 
     res.status(200).json({

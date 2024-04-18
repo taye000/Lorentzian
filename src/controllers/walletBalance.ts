@@ -12,6 +12,7 @@ export async function getWalletBalance(accountType: AccountTypeV5) {
     // Construct parameters object for getWalletBalance
     const params: GetWalletBalanceParamsV5 = {
       accountType: accountType as AccountTypeV5,
+      timestamp: Date.now() // Include the current timestamp
     };
 
     const walletBalance: WalletBalanceV5 = (await bybit.getWalletBalance(
@@ -23,7 +24,6 @@ export async function getWalletBalance(accountType: AccountTypeV5) {
     return equity;
   } catch (error: any) {
     logger.error("Error fetching wallet balance", error);
-
     return null;
   }
 }

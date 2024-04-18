@@ -41,17 +41,18 @@ export class BybitWrapper {
       const { retCode, retMsg, result } = await this.client.submitOrder(params);
       if (retCode === 0 && result) {
         return {
+          retCode,
+          retMsg,
           id: result.orderId,
-          orderLinkId: result.orderLinkId,
           market: params.symbol,
           side: params.side,
-          type: params.orderType,
           quantity: Number(params.qty),
         };
       } else {
         return {
           retCode,
           retMsg,
+          result,
         };
       }
     } catch (error: any) {
@@ -66,7 +67,6 @@ export class BybitWrapper {
       if (order.retCode !== 0) {
         logger.error("Error cancelling order", order);
       }
-      logger.info(order);
       return order;
     } catch (error: any) {
       logger.error("Error cancelling order", error);
@@ -80,7 +80,6 @@ export class BybitWrapper {
       if (orders.retCode !== 0) {
         logger.error("Error cancelling all orders", orders);
       }
-      logger.info(orders);
       return orders;
     } catch (error: any) {
       logger.error("Error cancelling all orders", error);

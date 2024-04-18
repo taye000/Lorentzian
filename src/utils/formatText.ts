@@ -1,6 +1,7 @@
 export const formatMessage = async (message: string | undefined) => {
+  console.log({ message });
   if (typeof message !== "string") {
-    return "";
+    return "An error occurred while formatting the message.";
   }
   return message
     .replaceAll("_", "\\_")
