@@ -100,7 +100,6 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       takeProfit: takeProfit,
     };
 
-    // Submit order for short position
     const orderResponse = await placeOrder(orderData);
     console.log({ orderResponse });
 
@@ -112,6 +111,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
         Market: ${market}
         Side: ${side}
         Quantity: ${quantity}`;
+      console.log({ msg });
       formattedMessage = await formatMessage(msg);
       console.log({ formattedMessage });
       await sendMessage(formattedMessage);
