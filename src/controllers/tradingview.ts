@@ -8,7 +8,6 @@ import {
   OrderParamsV5,
   CategoryV5,
   AccountTypeV5,
-  PositionV5,
 } from "bybit-api";
 import { calculateTPSL, countDecimalPlaces, getSymbolInfo } from "../common";
 import { configs } from "../configs";
@@ -17,6 +16,7 @@ import { getSize } from "./position";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
+    console.log(req.body);
     if (!req.body) {
       res.status(400).json({
         message: "Invalid request body",
@@ -38,6 +38,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       // Otherwise, use the body as is
       formattedMessage = req.body.toString();
     }
+    console.log("formattedMessage", formattedMessage);
     // Send the message to Telegram
     await sendMessage(formattedMessage);
 
@@ -46,11 +47,14 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     const closePrice: number = req.body.close;
     const side: OrderSideV5 = req.body.action as OrderSideV5;
 
-    const { side: tradeSide, size } = (await getSize(symbol)) as PositionV5;
+    const position = await getSize(symbol);
+    console.log({ position });
+
+    const markPrice = position?.markPrice;
 
     let positionQty: string | undefined = undefined;
-    if (tradeSide !== side && parseFloat(size) > 0) {
-      positionQty = (parseFloat(size) * 2).toString();
+    if (position && position.side !== side && parseFloat(position.size) > 0) {
+      positionQty = (parseFloat(position.size) * 2).toString();
     }
 
     const orderSizePercentage: number = configs.buyPercentage;
@@ -102,10 +106,11 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     };
 
     const orderResponse = await placeOrder(orderData);
+    console.log(orderResponse);
 
     if (orderResponse.success) {
       const { retMsg, id, market, side, quantity } = orderResponse.data;
-      const msg = `${retMsg} OrderID: ${id} placed Successfully at $: ${market} ${side} Price. Qty: ${quantity}`;
+      const msg = `${retMsg} OrderID: ${id} placed Successfully at $: ${markPrice} Price. Qty: ${quantity}`;
 
       formattedMessage = await formatMessage(msg);
 
