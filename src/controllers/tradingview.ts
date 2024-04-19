@@ -105,7 +105,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
 
     if (orderResponse.success) {
       const { retMsg, id, market, side, quantity } = orderResponse.data;
-      const msg = `${retMsg} Order ${id} placed successfully at ${market} ${side} price for qty ${quantity}`;
+      const msg = `${retMsg} OrderID: ${id} placed Successfully at $: ${market} ${side} Price. Qty: ${quantity}`;
 
       formattedMessage = await formatMessage(msg);
 
