@@ -7,30 +7,29 @@ import { CancelOrderParamsV5, CategoryV5, OrderParamsV5 } from "bybit-api";
 export async function placeOrder(params: OrderParamsV5) {
   try {
     const orderPlaced: any = await bybit.submitOrder(params);
-    console.log(orderPlaced);
-    if (orderPlaced.retcode === 0) {
+    if (orderPlaced.retCode === 0) {
       return {
         message: orderPlaced.retMsg,
         success: true,
         data: orderPlaced,
       };
     }
-    if (orderPlaced.retcode === 10001) {
+    if (orderPlaced.retCode === 10001) {
       return {
         message: "Request parameter error.",
         success: false,
         data: orderPlaced,
       };
     }
-    if (orderPlaced.retcode === 130021) {
+    if (orderPlaced.retCode === 130021) {
       return {
         message:
           "Error placing order: Insufficient balance. Please check your available funds.",
-        success: true,
+        success: false,
         data: orderPlaced,
       };
     }
-    if (orderPlaced.retcode === 130070) {
+    if (orderPlaced.retCode === 130070) {
       return {
         message:
           "Error placing order: Invalid order price. Please check the current market price and retry.",

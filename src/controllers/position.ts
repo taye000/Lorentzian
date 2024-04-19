@@ -19,7 +19,6 @@ export async function getSize(symbol: string): Promise<PositionV5 | undefined> {
     const position = positionInfo?.list[0];
 
     if (position) {
-      console.log({ position });
       return position;
     } else {
       return undefined;
