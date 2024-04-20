@@ -40,8 +40,8 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     // Send the message to Telegram
     await sendMessage(formattedMessage);
 
-    const category = "linear" as CategoryV5;
     let symbol = req.body.ticker as string;
+    const category = "linear" as CategoryV5;
     const closePrice: number = req.body.close;
     const side: OrderSideV5 = req.body.action as OrderSideV5;
 
