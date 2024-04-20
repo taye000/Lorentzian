@@ -16,7 +16,6 @@ import { getSize } from "./position";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
-    console.log(req.body);
     if (!req.body) {
       res.status(400).json({
         message: "Invalid request body",
@@ -38,17 +37,15 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       // Otherwise, use the body as is
       formattedMessage = req.body.toString();
     }
-    console.log("formattedMessage", formattedMessage);
     // Send the message to Telegram
     await sendMessage(formattedMessage);
 
-    const category = "linear" as CategoryV5;
     let symbol = req.body.ticker as string;
+    const category = "linear" as CategoryV5;
     const closePrice: number = req.body.close;
     const side: OrderSideV5 = req.body.action as OrderSideV5;
 
     const position = await getSize(symbol);
-    console.log({ position });
 
     const markPrice = position?.markPrice;
 
