@@ -91,7 +91,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     if (positionQty) {
       qty = positionQty;
     }
-
+    
     const orderData: OrderParamsV5 = {
       category: category,
       symbol: symbol,
@@ -101,6 +101,8 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       stopLoss: stopLoss,
       takeProfit: takeProfit,
     };
+    
+    console.log(orderData);
 
     const orderResponse = await placeOrder(orderData);
     console.log(orderResponse);
