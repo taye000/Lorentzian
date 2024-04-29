@@ -29,7 +29,7 @@ export const bybit = new BybitWrapper(
 // Middleware for authorization
 const authMiddleware = async (ctx: Context, next: () => void) => {
   try {
-    if (ctx.from?.id === Number(configs.chat_id)) {
+    if (configs.whitelisted.includes(ctx.from?.id || 0)) {
       return next();
     }
     logger.warn(`Unauthorized access attempt by user ID ${ctx.from?.id}`);
@@ -45,9 +45,11 @@ bot.use(authMiddleware);
 const sendMessage = async (message: any) => {
   try {
     // Send the message
-    await bot.telegram.sendMessage(configs.chat_id!, message, {
-      parse_mode: "MarkdownV2",
-    });
+    for (const chatId of configs.whitelisted) {
+      await bot.telegram.sendMessage(chatId, message, {
+        parse_mode: "MarkdownV2",
+      });
+    }
   } catch (error) {
     // Log any errors that occur during message sending
     logger.error("Error sending message", error);
@@ -169,9 +171,7 @@ bot.command("order", async (ctx: Context) => {
       throw new Error("Empty order data");
     }
 
-    await ctx.reply(
-      `Order submitted successfully. Order ID: ${order.id}`
-    );
+    await ctx.reply(`Order submitted successfully. Order ID: ${order.id}`);
   } catch (error: any) {
     ctx.reply("Error submitting order, try again.", error);
     logger.error("Error submitting order", error);

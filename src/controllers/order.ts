@@ -7,7 +7,6 @@ import { CancelOrderParamsV5, CategoryV5, OrderParamsV5 } from "bybit-api";
 export async function placeOrder(params: OrderParamsV5) {
   try {
     const orderPlaced: any = await bybit.submitOrder(params);
-    console.log("Order placed: ", orderPlaced);
     if (orderPlaced.retCode === 0) {
       return {
         message: orderPlaced.retMsg,

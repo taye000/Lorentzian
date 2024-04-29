@@ -2,7 +2,7 @@ import "dotenv/config";
 import logger from "../utils/logger";
 
 const botToken = process.env.BOT_TOKEN;
-const chatId = process.env.CHAT_ID;
+const chatId = [251669027, 1799640345];
 const port = process.env.PORT;
 
 const apiKey = process.env.API_KEY;
@@ -63,7 +63,7 @@ if (isNaN(parsedPort) || parsedPort <= 0) {
 
 export const configs = {
   bot_token: botToken,
-  chat_id: chatId,
+  whitelisted: chatId,
   port: parsedPort,
   buyPercentage: parseFloat(buyPercentage || "0.1"),
   accountType,
