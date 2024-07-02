@@ -50,6 +50,9 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     console.log("closePrice", closePrice);
     console.log("side", side);
 
+    const { minOrderSize } = await getSymbolInfo(symbol);
+    console.log("minOrderSize", minOrderSize);
+
     const position = await getSize(symbol);
     let positionQty: string | undefined = undefined;
     let markPrice: string | undefined = undefined;
@@ -70,20 +73,16 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       }
     } else {
       await sendMessage("You have no open Position for this symbol");
-      return;
     }
 
     const orderSizePercentage = configs.buyPercentage;
     const leverage = parseFloat(configs.leverage);
     const { takeProfit, stopLoss } = calculateTPSL(closePrice, side);
 
-    console.log("takeProfit", takeProfit);
-    console.log("stopLoss", stopLoss);
     console.log("orderSizePercentage", orderSizePercentage);
     console.log("leverage", leverage);
-
-    const { minOrderSize } = await getSymbolInfo(symbol);
-    console.log("minOrderSize", minOrderSize);
+    console.log("takeProfit", takeProfit);
+    console.log("stopLoss", stopLoss);
 
     const coinDecimalPlaces = countDecimalPlaces(minOrderSize);
     const accountType = "contract" as AccountTypeV5;
