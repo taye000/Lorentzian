@@ -3,6 +3,6 @@ import { tradingviewWebHook } from "../../controllers";
 
 const tradingviewHookRouter = Router();
 
-tradingviewHookRouter.post("/webhook", tradingviewWebHook);
+tradingviewHookRouter.post("/", tradingviewWebHook);
 
 export default tradingviewHookRouter;
