@@ -72,7 +72,7 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
         console.log("positionQty", positionQty);
       }
     } else {
-      await sendMessage("You have no open Position for this symbol");
+      console.log("You have no prior Position for this symbol");
     }
 
     const orderSizePercentage = configs.buyPercentage;
@@ -86,9 +86,15 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
 
     const coinDecimalPlaces = countDecimalPlaces(minOrderSize);
     const accountType = "contract" as AccountTypeV5;
+    console.log("coinDecimalPlaces", coinDecimalPlaces);
 
     const equity = await getWalletBalance(accountType);
     console.log("equity", equity);
+
+    if (equity && isNaN(equity)) {
+      await sendMessage("You have No equity to place order");
+      return;
+    }
 
     let qty: string;
 
@@ -96,6 +102,8 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
       const equityAmount = equity * orderSizePercentage;
       const orderSize = equityAmount / closePrice;
       const orderSizeWithLeverage = orderSize * leverage;
+      console.log("orderSize", orderSize);
+      console.log("orderSizeWithLeverage", orderSizeWithLeverage);
 
       // Check if orderSize is less than minOrder
       if (orderSizeWithLeverage < minOrderSize) {
