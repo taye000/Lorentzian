@@ -18,14 +18,10 @@ export async function getSize(symbol: string): Promise<PositionV5 | undefined> {
 
     const position = positionInfo?.list[0];
 
-    if (position) {
-      return position;
-    } else {
-      return undefined;
-    }
+    return position || undefined;
   } catch (error: any) {
     logger.error("Error getting position info", error);
 
-    throw new Error("Error getting position info: " + error.message);
+    return undefined;
   }
 }

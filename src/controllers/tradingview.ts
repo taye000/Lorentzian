@@ -16,107 +16,129 @@ import { getSize } from "./position";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
+    console.log("req.body", req.body);
     if (!req.body) {
-      res.status(400).json({
+      return res.status(400).json({
         message: "Invalid request body",
         success: false,
       });
-      return;
     }
-    // Parse the body based on the Content-Type header
-    let formattedMessage: string;
-    if (req.is("json")) {
-      // If the content type is JSON, parse the body as JSON
-      const { action, ticker, close, interval } = req.body;
 
-      // Format the message using formatMessage function
-      formattedMessage = await formatMessage(
-        `${action} ${ticker} ${close} ${interval}`
-      );
-    } else {
-      // Otherwise, use the body as is
-      formattedMessage = req.body.toString();
+    const { action, ticker, close, interval } = req.body;
+
+    if (!action || !ticker || !close || !interval) {
+      return res.status(400).json({
+        message: "Missing required fields",
+        success: false,
+      });
     }
-    // Send the message to Telegram
+
+    const formattedMessage = await formatMessage(
+      `${action} ${ticker} ${close} ${interval}`
+    );
+    console.log("formattedMessage", formattedMessage);
     await sendMessage(formattedMessage);
 
-    let symbol = req.body.ticker as string;
-    const category = "linear" as CategoryV5;
-    const closePrice: number = req.body.close;
-    const side: OrderSideV5 = req.body.action as OrderSideV5;
+    const symbol = ticker.trim(); // Ensure there are no extra spaces
+    const category: CategoryV5 = "linear";
+    const closePrice = parseFloat(close);
+    const side = (action.charAt(0).toUpperCase() +
+      action.slice(1).toLowerCase()) as OrderSideV5;
+
+    console.log("symbol", symbol);
+    console.log("category", category);
+    console.log("closePrice", closePrice);
+    console.log("side", side);
 
     const position = await getSize(symbol);
-
-    const markPrice = position?.markPrice;
-
     let positionQty: string | undefined = undefined;
-    if (position && position.side !== side && parseFloat(position.size) > 0) {
-      positionQty = (parseFloat(position.size) * 2).toString();
+    let markPrice: string | undefined = undefined;
+
+    if (position && parseFloat(position.size) > 0) {
+      console.log("position", position);
+      markPrice = position.markPrice;
+      const positionSide = position.side;
+      const positionSize = parseFloat(position.size);
+
+      console.log("markPrice", markPrice);
+      console.log("positionSide", positionSide);
+      console.log("positionSize", positionSize);
+
+      if (positionSize > 0 && positionSide !== side) {
+        positionQty = (positionSize * 2).toString();
+        console.log("positionQty", positionQty);
+      }
+    } else {
+      await sendMessage("You have no open Position for this symbol");
+      return;
     }
 
-    const orderSizePercentage: number = configs.buyPercentage;
-    let leverage: number = parseFloat(configs.leverage);
-
+    const orderSizePercentage = configs.buyPercentage;
+    const leverage = parseFloat(configs.leverage);
     const { takeProfit, stopLoss } = calculateTPSL(closePrice, side);
 
-    const { minOrderSize, name } = await getSymbolInfo(symbol);
-    let minOrder: number = minOrderSize;
+    console.log("takeProfit", takeProfit);
+    console.log("stopLoss", stopLoss);
+    console.log("orderSizePercentage", orderSizePercentage);
+    console.log("leverage", leverage);
 
-    let coinDecimalPlaces = countDecimalPlaces(minOrderSize);
+    const { minOrderSize } = await getSymbolInfo(symbol);
+    console.log("minOrderSize", minOrderSize);
 
+    const coinDecimalPlaces = countDecimalPlaces(minOrderSize);
     const accountType = "contract" as AccountTypeV5;
+
+    const equity = await getWalletBalance(accountType);
+    console.log("equity", equity);
 
     let qty: string;
 
-    const equity: number | null = await getWalletBalance(accountType);
-
-    if (equity !== null) {
+    if (equity !== null && !Number.isNaN(equity)) {
       const equityAmount = equity * orderSizePercentage;
       const orderSize = equityAmount / closePrice;
       const orderSizeWithLeverage = orderSize * leverage;
 
       // Check if orderSize is less than minOrder
-      if (orderSizeWithLeverage < minOrder) {
+      if (orderSizeWithLeverage < minOrderSize) {
         // Set qty to minOrder * leverage
-        qty = (minOrder * leverage).toFixed(coinDecimalPlaces);
+        qty = (minOrderSize * leverage).toFixed(coinDecimalPlaces);
       } else {
         // Otherwise, set qty to orderSize rounded to coinDecimalPlaces
         qty = orderSizeWithLeverage.toFixed(coinDecimalPlaces);
       }
     } else {
       // If equity is null, set qty to minOrder
-      qty = minOrder.toFixed(coinDecimalPlaces);
+      qty = minOrderSize.toFixed(coinDecimalPlaces);
     }
 
     if (positionQty) {
       qty = positionQty;
     }
+    console.log("qty", qty);
 
     const orderData: OrderParamsV5 = {
-      category: category,
-      symbol: symbol,
-      side: side,
+      category,
+      symbol,
+      side,
       orderType: "Market",
-      qty: qty,
-      stopLoss: stopLoss,
-      takeProfit: takeProfit,
+      qty,
+      stopLoss,
+      takeProfit,
     };
-
-    console.log(orderData);
+    console.log("orderData", orderData);
 
     const orderResponse = await placeOrder(orderData);
-    console.log(orderResponse);
+    console.log("orderResponse", orderResponse);
 
     if (orderResponse.success) {
-      const { retMsg, id, market, side, quantity } = orderResponse.data;
-      const msg = `${retMsg} OrderID: ${id} placed Successfully at $: ${markPrice} Price. Qty: ${quantity}`;
+      const { retMsg, id, quantity } = orderResponse.data;
+      const successMessage = `${retMsg} OrderID: ${id} placed Successfully at $: ${markPrice} Price. Qty: ${quantity}`;
 
-      formattedMessage = await formatMessage(msg);
-
-      await sendMessage(formattedMessage);
+      const formattedSuccessMessage = await formatMessage(successMessage);
+      await sendMessage(formattedSuccessMessage);
     } else {
-      formattedMessage = await formatMessage(orderResponse.message);
-      await sendMessage(formattedMessage);
+      const formattedErrorMessage = await formatMessage(orderResponse.message);
+      await sendMessage(formattedErrorMessage);
     }
 
     res.status(200).json({
@@ -127,7 +149,6 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error("Error processing TradingView Webhook:", error);
 
-    // Sending an error response back to TradingView
     res.status(500).json({
       message: "Error processing TradingView Webhook",
       success: false,
