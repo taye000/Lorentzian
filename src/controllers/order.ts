@@ -21,7 +21,7 @@ export async function placeOrder(params: OrderParamsV5) {
         data: orderPlaced,
       };
     }
-    if (orderPlaced.retCode === 130021) {
+    if (orderPlaced.retCode === 110007) {
       return {
         message:
           "Error placing order: Insufficient balance. Please check your available funds.",

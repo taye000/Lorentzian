@@ -16,7 +16,6 @@ import { getSize } from "./position";
 
 export const tradingviewWebHook = async (req: Request, res: Response) => {
   try {
-    console.log("req.body", req.body);
     if (!req.body) {
       return res.status(400).json({
         message: "Invalid request body",
@@ -36,7 +35,6 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     const formattedMessage = await formatMessage(
       `${action} ${ticker} ${close} ${interval}`
     );
-    console.log("formattedMessage", formattedMessage);
     await sendMessage(formattedMessage);
 
     const symbol = ticker.trim(); // Ensure there are no extra spaces
@@ -45,20 +43,13 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
     const side = (action.charAt(0).toUpperCase() +
       action.slice(1).toLowerCase()) as OrderSideV5;
 
-    console.log("symbol", symbol);
-    console.log("category", category);
-    console.log("closePrice", closePrice);
-    console.log("side", side);
-
     const { minOrderSize } = await getSymbolInfo(symbol);
-    console.log("minOrderSize", minOrderSize);
 
     const position = await getSize(symbol);
     let positionQty: string | undefined = undefined;
     let markPrice: string | undefined = undefined;
 
     if (position && parseFloat(position.size) > 0) {
-      console.log("position", position);
       markPrice = position.markPrice;
       const positionSide = position.side;
       const positionSize = parseFloat(position.size);
@@ -93,7 +84,10 @@ export const tradingviewWebHook = async (req: Request, res: Response) => {
 
     if (equity && isNaN(equity)) {
       await sendMessage("You have No equity to place order");
-      return;
+      return res.status(400).json({
+        message: "You have No equity to place order",
+        success: false,
+      });
     }
 
     let qty: string;

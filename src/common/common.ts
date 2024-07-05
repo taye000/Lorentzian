@@ -39,13 +39,15 @@ export function calculateTPSL(entryPrice: number, side: OrderSideV5) {
 
 export function countDecimalPlaces(value: number): number {
   const stringValue = value.toString();
+  console.log("stringValue", stringValue);
 
   const decimalIndex = stringValue.indexOf(".");
+  console.log("decimalIndex", decimalIndex);
 
   if (decimalIndex === -1) {
     return 0;
   }
 
-  // Return the number of characters after the decimal point
+  // Count the number of characters after the decimal point
   return stringValue.length - decimalIndex - 1;
 }
